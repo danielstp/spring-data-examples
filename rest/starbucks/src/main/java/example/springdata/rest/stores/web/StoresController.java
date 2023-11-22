@@ -1,11 +1,11 @@
 /*
- * Copyright 2014-2018 the original author or authors.
+ * Copyright 2014-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,18 +22,16 @@ import example.springdata.rest.stores.StoreRepository;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
 import org.springframework.data.rest.webmvc.support.RepositoryEntityLinks;
+import org.springframework.hateoas.LinkRelation;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -56,12 +54,8 @@ class StoresController {
 
 	static {
 
-		Map<String, Point> locations = new HashMap<>();
-
-		locations.put("Pivotal SF", new Point(-122.4041764, 37.7819286));
-		locations.put("Timesquare NY", new Point(-73.995146, 40.740337));
-
-		KNOWN_LOCATIONS = Collections.unmodifiableMap(locations);
+		KNOWN_LOCATIONS = Map.of("Pivotal SF", new Point(-122.4041764, 37.7819286), "Timesquare NY",
+				new Point(-73.995146, 40.740337));
 	}
 
 	private final StoreRepository repository;
@@ -80,16 +74,17 @@ class StoresController {
 	String index(Model model, @RequestParam Optional<Point> location, @RequestParam Optional<Distance> distance,
 			Pageable pageable) {
 
-		Point point = location.orElse(KNOWN_LOCATIONS.get("Timesquare NY"));
+		var point = location.orElse(KNOWN_LOCATIONS.get("Timesquare NY"));
 
-		Page<Store> stores = repository.findByAddressLocationNear(point, distance.orElse(DEFAULT_DISTANCE), pageable);
+		var stores = repository.findByAddressLocationNear(point, distance.orElse(DEFAULT_DISTANCE), pageable);
 
 		model.addAttribute("stores", stores);
 		model.addAttribute("distances", DISTANCES);
 		model.addAttribute("selectedDistance", distance.orElse(DEFAULT_DISTANCE));
 		model.addAttribute("location", point);
 		model.addAttribute("locations", KNOWN_LOCATIONS);
-		model.addAttribute("api", entityLinks.linkToSearchResource(Store.class, "by-location", pageable).getHref());
+		model.addAttribute("api",
+				entityLinks.linkToSearchResource(Store.class, LinkRelation.of("by-location"), pageable).getHref());
 
 		return "index";
 	}

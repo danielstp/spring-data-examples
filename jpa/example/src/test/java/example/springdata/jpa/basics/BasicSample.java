@@ -1,11 +1,11 @@
 /*
- * Copyright 2013-2018 the original author or authors.
+ * Copyright 2013-2021 the original author or authors.
  *
  * Licenseimport static org.junit.Assert.*;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Persistence;
 
 import org.junit.After;
 import org.junit.Before;
@@ -23,13 +23,13 @@ import static org.assertj.core.api.Assertions.*;
 
 import example.springdata.jpa.simple.User;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Persistence;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 import org.springframework.data.repository.CrudRepository;
 
@@ -38,28 +38,29 @@ import org.springframework.data.repository.CrudRepository;
  *
  * @author Oliver Gierke
  * @author Thomas Darimont
+ * @author Divya Srivastava
  */
-public class BasicSample {
+class BasicSample {
 
-	CrudRepository<User, Long> userRepository;
-	EntityManager em;
+	private CrudRepository<User, Long> userRepository;
+	private EntityManager em;
 
 	/**
 	 * Sets up a {@link SimpleJpaRepository} instance.
 	 */
-	@Before
-	public void setUp() {
+	@BeforeEach
+	void setUp() {
 
-		EntityManagerFactory factory = Persistence.createEntityManagerFactory("jpa.sample.plain");
+		var factory = Persistence.createEntityManagerFactory("jpa.sample.plain");
 		em = factory.createEntityManager();
 
-		userRepository = new SimpleJpaRepository<User, Long>(User.class, em);
+		userRepository = new SimpleJpaRepository<>(User.class, em);
 
 		em.getTransaction().begin();
 	}
 
-	@After
-	public void tearDown() {
+	@AfterEach
+	void tearDown() {
 		em.getTransaction().rollback();
 	}
 
@@ -68,9 +69,9 @@ public class BasicSample {
 	 * exception. Simplification serves descriptiveness.
 	 */
 	@Test
-	public void savingUsers() {
+	void savingUsers() {
 
-		User user = new User();
+		var user = new User();
 		user.setUsername("username");
 
 		user = userRepository.save(user);

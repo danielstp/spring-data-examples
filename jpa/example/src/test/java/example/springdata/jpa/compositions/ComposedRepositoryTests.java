@@ -1,11 +1,11 @@
 /*
- * Copyright 2017-2018 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,22 +19,22 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.util.Arrays;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Integration test showing the usage of a composite repository via {@link UserRepository}.
  *
  * @author Mark Paluch
+ * @author Divya Srivastava
  */
-@RunWith(SpringRunner.class)
+
 @Transactional
 @SpringBootTest
-public class ComposedRepositoryTests {
+class ComposedRepositoryTests {
 
 	@Autowired UserRepository repository;
 
@@ -42,9 +42,9 @@ public class ComposedRepositoryTests {
 	 * Tests inserting a user and asserts it can be loaded again.
 	 */
 	@Test
-	public void testInsert() {
+	void testInsert() {
 
-		User user = new User();
+		var user = new User();
 		user.setUsername("username");
 
 		user = repository.save(user);
@@ -56,14 +56,14 @@ public class ComposedRepositoryTests {
 	 * Testing {@link ContactRepository} fragment.
 	 */
 	@Test
-	public void testContactRepository() {
+	void testContactRepository() {
 
-		User walter = new User();
+		var walter = new User();
 		walter.setUsername("heisenberg");
 		walter.setFirstname("Walter");
 		walter.setLastname("White");
 
-		User walterJr = new User();
+		var walterJr = new User();
 		walterJr.setUsername("flynn");
 		walterJr.setFirstname("Walter Jr.");
 		walterJr.setLastname("White");
@@ -77,20 +77,20 @@ public class ComposedRepositoryTests {
 	 * Testing {@link EmployeeRepository} fragment.
 	 */
 	@Test
-	public void testFindCoworkers() {
+	void testFindCoworkers() {
 
-		User gustavo = new User();
+		var gustavo = new User();
 		gustavo.setUsername("pollosh");
 		gustavo.setFirstname("Gustavo");
 		gustavo.setLastname("Fring");
 
-		User walter = new User();
+		var walter = new User();
 		walter.setUsername("heisenberg");
 		walter.setFirstname("Walter");
 		walter.setLastname("White");
 		walter.setManager(gustavo);
 
-		User jesse = new User();
+		var jesse = new User();
 		jesse.setUsername("capncook");
 		jesse.setFirstname("Jesse");
 		jesse.setLastname("Pinkman");
@@ -105,20 +105,20 @@ public class ComposedRepositoryTests {
 	 * Testing {@link EmployeeRepository} fragment.
 	 */
 	@Test
-	public void testFindSubordinates() {
+	void testFindSubordinates() {
 
-		User gustavo = new User();
+		var gustavo = new User();
 		gustavo.setUsername("pollosh");
 		gustavo.setFirstname("Gustavo");
 		gustavo.setLastname("Fring");
 
-		User walter = new User();
+		var walter = new User();
 		walter.setUsername("heisenberg");
 		walter.setFirstname("Walter");
 		walter.setLastname("White");
 		walter.setManager(gustavo);
 
-		User jesse = new User();
+		var jesse = new User();
 		jesse.setUsername("capncook");
 		jesse.setFirstname("Jesse");
 		jesse.setLastname("Pinkman");

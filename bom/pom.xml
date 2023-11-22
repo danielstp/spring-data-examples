@@ -1,5 +1,5 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>org.springframework.data.examples</groupId>
@@ -9,8 +9,8 @@
 	<name>Spring Data - Using the BOM for dependency management</name>
 
 	<properties>
-		<spring.version>5.0.2.RELEASE</spring.version>
-		<spring-data.version>Kay-SR2</spring-data.version>
+		<spring.version>6.0.0</spring.version>
+		<spring-data.version>2022.0.0</spring-data.version>
 	</properties>
 
 	<dependencyManagement>
@@ -26,7 +26,7 @@
 
 			<dependency>
 				<groupId>org.springframework.data</groupId>
-				<artifactId>spring-data-releasetrain</artifactId>
+				<artifactId>spring-data-bom</artifactId>
 				<version>${spring-data.version}</version>
 				<scope>import</scope>
 				<type>pom</type>
@@ -49,5 +49,28 @@
 		</dependency>
 
 	</dependencies>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>com.gradle</groupId>
+					<artifactId>gradle-enterprise-maven-extension</artifactId>
+					<configuration>
+						<gradleEnterprise>
+							<plugins>
+								<plugin>
+									<artifactId>maven-surefire-plugin</artifactId>
+									<outputs>
+										<notCacheableBecause>these tests showcase Spring Data features and should always rerun</notCacheableBecause>
+									</outputs>
+								</plugin>
+							</plugins>
+						</gradleEnterprise>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
 
 </project>

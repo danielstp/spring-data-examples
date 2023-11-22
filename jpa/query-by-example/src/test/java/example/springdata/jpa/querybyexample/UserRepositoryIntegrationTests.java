@@ -1,11 +1,11 @@
 /*
- * Copyright 2016-2018 the original author or authors.
+ * Copyright 2016-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,14 +21,14 @@ import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatc
 
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Example;
-import org.springframework.data.domain.ExampleMatcher.StringMatcher;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.domain.ExampleMatcher.*;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -37,8 +37,9 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Mark Paluch
  * @author Oliver Gierke
  * @author Jens Schauder
+ * @author Divya Srivastava
  */
-@RunWith(SpringRunner.class)
+
 @Transactional
 @SpringBootTest
 public class UserRepositoryIntegrationTests {
@@ -47,7 +48,7 @@ public class UserRepositoryIntegrationTests {
 
 	User skyler, walter, flynn, marie, hank;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 
 		repository.deleteAll();
@@ -65,7 +66,7 @@ public class UserRepositoryIntegrationTests {
 	@Test
 	public void countBySimpleExample() {
 
-		Example<User> example = Example.of(new User(null, "White", null));
+		var example = Example.of(new User(null, "White", null));
 
 		assertThat(repository.count(example)).isEqualTo(3L);
 	}
@@ -76,7 +77,7 @@ public class UserRepositoryIntegrationTests {
 	@Test
 	public void ignorePropertiesAndMatchByAge() {
 
-		Example<User> example = Example.of(flynn, matching(). //
+		var example = Example.of(flynn, matching(). //
 				withIgnorePaths("firstname", "lastname"));
 
 		assertThat(repository.findOne(example)).contains(flynn);
@@ -88,7 +89,7 @@ public class UserRepositoryIntegrationTests {
 	@Test
 	public void substringMatching() {
 
-		Example<User> example = Example.of(new User("er", null, null), matching(). //
+		var example = Example.of(new User("er", null, null), matching(). //
 				withStringMatcher(StringMatcher.ENDING));
 
 		assertThat(repository.findAll(example)).containsExactly(skyler, walter);
@@ -100,7 +101,7 @@ public class UserRepositoryIntegrationTests {
 	@Test
 	public void matchStartingStringsIgnoreCase() {
 
-		Example<User> example = Example.of(new User("Walter", "WHITE", null), matching(). //
+		var example = Example.of(new User("Walter", "WHITE", null), matching(). //
 				withIgnorePaths("age"). //
 				withMatcher("firstname", startsWith()). //
 				withMatcher("lastname", ignoreCase()));
@@ -114,10 +115,10 @@ public class UserRepositoryIntegrationTests {
 	@Test
 	public void configuringMatchersUsingLambdas() {
 
-		Example<User> example = Example.of(new User("Walter", "WHITE", null), matching(). //
+		var example = Example.of(new User("Walter", "WHITE", null), matching(). //
 				withIgnorePaths("age"). //
-				withMatcher("firstname", matcher -> matcher.startsWith()). //
-				withMatcher("lastname", matcher -> matcher.ignoreCase()));
+				withMatcher("firstname", ExampleMatcher.GenericPropertyMatcher::startsWith). //
+				withMatcher("lastname", ExampleMatcher.GenericPropertyMatcher::ignoreCase));
 
 		assertThat(repository.findAll(example)).containsExactlyInAnyOrder(flynn, walter);
 	}
@@ -128,8 +129,8 @@ public class UserRepositoryIntegrationTests {
 	@Test
 	public void valueTransformer() {
 
-		Example<User> example = Example.of(new User(null, "White", 99), matching(). //
-				withMatcher("age", matcher -> matcher.transform(value -> Optional.of(Integer.valueOf(50)))));
+		var example = Example.of(new User(null, "White", 99), matching(). //
+				withMatcher("age", matcher -> matcher.transform(value -> Optional.of(50))));
 
 		assertThat(repository.findAll(example)).containsExactly(walter);
 	}

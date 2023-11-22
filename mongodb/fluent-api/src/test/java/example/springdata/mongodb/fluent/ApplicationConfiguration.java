@@ -1,11 +1,11 @@
 /*
- * Copyright 2017-2018 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -40,30 +40,30 @@ public class ApplicationConfiguration {
 				template.dropCollection(COLLECTION);
 			}
 
-			GeospatialIndex index = new GeospatialIndex("homePlanet.coordinates") //
+			var index = new GeospatialIndex("homePlanet.coordinates") //
 					.typed(GeoSpatialIndexType.GEO_2DSPHERE) //
 					.named("planet-coordinate-idx");
 
 			template.createCollection(COLLECTION);
 			template.indexOps(SWCharacter.class).ensureIndex(index);
 
-			Planet alderaan = new Planet("alderaan", new Point(-73.9667, 40.78));
-			Planet stewjon = new Planet("stewjon", new Point(-73.9836, 40.7538));
-			Planet tatooine = new Planet("tatooine", new Point(-73.9928, 40.7193));
+			var alderaan = new Planet("alderaan", new Point(-73.9667, 40.78));
+			var stewjon = new Planet("stewjon", new Point(-73.9836, 40.7538));
+			var tatooine = new Planet("tatooine", new Point(-73.9928, 40.7193));
 
-			Jedi anakin = new Jedi("anakin", "skywalker");
+			var anakin = new Jedi("anakin", "skywalker");
 			anakin.setHomePlanet(tatooine);
 
-			Jedi luke = new Jedi("luke", "skywalker");
+			var luke = new Jedi("luke", "skywalker");
 			luke.setHomePlanet(tatooine);
 
-			Jedi leia = new Jedi("leia", "organa");
+			var leia = new Jedi("leia", "organa");
 			leia.setHomePlanet(alderaan);
 
-			Jedi obiWan = new Jedi("obi-wan", "kenobi");
+			var obiWan = new Jedi("obi-wan", "kenobi");
 			obiWan.setHomePlanet(stewjon);
 
-			Human han = new Human("han", "solo");
+			var han = new Human("han", "solo");
 
 			template.save(anakin, COLLECTION);
 			template.save(luke, COLLECTION);

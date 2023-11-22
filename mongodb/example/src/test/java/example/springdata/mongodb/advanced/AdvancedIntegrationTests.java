@@ -1,11 +1,11 @@
 /*
- * Copyright 2014-2018 the original author or authors.
+ * Copyright 2014-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,36 +18,49 @@ package example.springdata.mongodb.advanced;
 import static org.assertj.core.api.Assertions.*;
 
 import example.springdata.mongodb.customer.Customer;
+import example.springdata.mongodb.util.MongoContainers;
 
 import org.bson.Document;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Meta;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+
+import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.client.FindIterable;
 
 /**
  * @author Christoph Strobl
  * @author Oliver Gierke
  */
-@RunWith(SpringRunner.class)
-@SpringBootTest
-public class AdvancedIntegrationTests {
+@Testcontainers
+@DataMongoTest
+class AdvancedIntegrationTests {
+
+	@Container //
+	private static MongoDBContainer mongoDBContainer = MongoContainers.getDefaultContainer();
+
+	@DynamicPropertySource
+	static void setProperties(DynamicPropertyRegistry registry) {
+		registry.add("spring.data.mongodb.uri", mongoDBContainer::getReplicaSetUrl);
+	}
 
 	@Autowired AdvancedRepository repository;
 	@Autowired MongoOperations operations;
 
-	Customer dave, oliver, carter;
+	private Customer dave, oliver, carter;
 
-	@Before
-	public void setUp() {
+	@BeforeEach
+	void setUp() {
 
 		repository.deleteAll();
 
@@ -63,7 +76,7 @@ public class AdvancedIntegrationTests {
 	 * <strong>NOTE</strong>: Requires MongoDB v. 2.6.4+
 	 */
 	@Test
-	public void findByFirstnameUsingMetaAttributes() {
+	void findByFirstnameUsingMetaAttributes() {
 
 		// execute derived finder method just to get the comment in the profile log
 		repository.findByFirstname(dave.getFirstname());
@@ -71,12 +84,12 @@ public class AdvancedIntegrationTests {
 		// execute another finder without meta attributes that should not be picked up
 		repository.findByLastname(dave.getLastname(), Sort.by("firstname"));
 
-		FindIterable<Document> cursor = operations.getCollection(ApplicationConfiguration.SYSTEM_PROFILE_DB)
+		var cursor = operations.getCollection(ApplicationConfiguration.SYSTEM_PROFILE_DB)
 				.find(new BasicDBObject("query.$comment", AdvancedRepository.META_COMMENT));
 
-		for (Document document : cursor) {
+		for (var document : cursor) {
 
-			Document query = (Document) document.get("query");
+			var query = (Document) document.get("query");
 			assertThat(query).containsKey("foo");
 		}
 	}

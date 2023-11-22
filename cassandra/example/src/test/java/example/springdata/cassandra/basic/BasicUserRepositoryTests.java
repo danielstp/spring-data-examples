@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2018 the original author or authors.
+ * Copyright 2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,22 @@
 package example.springdata.cassandra.basic;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.Assume.*;
+import static org.assertj.core.api.Assumptions.*;
 
 import example.springdata.cassandra.util.CassandraKeyspace;
 import example.springdata.cassandra.util.CassandraVersion;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import java.util.stream.LongStream;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.util.Version;
-import org.springframework.test.context.junit4.SpringRunner;
 
-import com.datastax.driver.core.Session;
+import com.datastax.oss.driver.api.core.CqlSession;
 
 /**
  * Integration test showing the basic usage of {@link BasicUserRepository}.
@@ -40,20 +41,18 @@ import com.datastax.driver.core.Session;
  * @author Christoph Strobl
  * @author Mark Paluch
  */
-@RunWith(SpringRunner.class)
 @SpringBootTest(classes = BasicConfiguration.class)
-public class BasicUserRepositoryTests {
+@CassandraKeyspace
+class BasicUserRepositoryTests {
 
-	public final static Version CASSANDRA_3_4 = Version.parse("3.4");
-
-	@ClassRule public final static CassandraKeyspace CASSANDRA_KEYSPACE = CassandraKeyspace.onLocalhost();
+	private final static Version CASSANDRA_3_4 = Version.parse("3.4");
 
 	@Autowired BasicUserRepository repository;
-	@Autowired Session session;
-	User user;
+	@Autowired CqlSession session;
+	private User user;
 
-	@Before
-	public void setUp() {
+	@BeforeEach
+	void setUp() {
 
 		user = new User();
 		user.setId(42L);
@@ -66,7 +65,7 @@ public class BasicUserRepositoryTests {
 	 * Saving an object using the Cassandra Repository will create a persistent representation of the object in Cassandra.
 	 */
 	@Test
-	public void findSavedUserById() {
+	void findSavedUserById() {
 
 		user = repository.save(user);
 
@@ -77,7 +76,7 @@ public class BasicUserRepositoryTests {
 	 * Cassandra can be queries by using query methods annotated with {@link @Query}.
 	 */
 	@Test
-	public void findByAnnotatedQueryMethod() {
+	void findByAnnotatedQueryMethod() {
 
 		repository.save(user);
 
@@ -91,7 +90,7 @@ public class BasicUserRepositoryTests {
 	 * key requires a secondary index.
 	 */
 	@Test
-	public void findByDerivedQueryMethod() throws InterruptedException {
+	void findByDerivedQueryMethod() throws InterruptedException {
 
 		session.execute("CREATE INDEX IF NOT EXISTS user_username ON users (uname);");
 		/*
@@ -109,11 +108,12 @@ public class BasicUserRepositoryTests {
 	 * Spring Data Cassandra supports {@code LIKE} and {@code CONTAINS} query keywords to for SASI indexes.
 	 */
 	@Test
-	public void findByDerivedQueryMethodWithSASI() throws InterruptedException {
+	void findByDerivedQueryMethodWithSASI() throws InterruptedException {
 
-		assumeTrue(CassandraVersion.getReleaseVersion(session).isGreaterThanOrEqualTo(CASSANDRA_3_4));
+		assumeThat(CassandraVersion.getReleaseVersion(session).isGreaterThanOrEqualTo(CASSANDRA_3_4)).isTrue();
 
-		session.execute("CREATE CUSTOM INDEX ON users (lname) USING 'org.apache.cassandra.index.sasi.SASIIndex';");
+		session.execute(
+				"CREATE CUSTOM INDEX IF NOT EXISTS users_lname_idx_1 ON users (lname) USING 'org.apache.cassandra.index.sasi.SASIIndex';");
 		/*
 		  Cassandra secondary indexes are created in the background without the possibility to check
 		  whether they are available or not. So we are forced to just wait. *sigh*
@@ -123,5 +123,26 @@ public class BasicUserRepositoryTests {
 		repository.save(user);
 
 		assertThat(repository.findUsersByLastnameStartsWith("last")).contains(user);
+	}
+
+	/**
+	 * Spring Data Cassandra supports {@code Limit} to reduce the number of returned results.
+	 */
+	@Test
+	void limitResultSize() throws InterruptedException {
+
+		assumeThat(CassandraVersion.getReleaseVersion(session).isGreaterThanOrEqualTo(CASSANDRA_3_4)).isTrue();
+
+		session.execute(
+				"CREATE CUSTOM INDEX IF NOT EXISTS users_lname_idx_1 ON users (lname) USING 'org.apache.cassandra.index.sasi.SASIIndex';");
+		/*
+		  Cassandra secondary indexes are created in the background without the possibility to check
+		  whether they are available or not. So we are forced to just wait. *sigh*
+		 */
+		Thread.sleep(1000);
+
+		LongStream.range(0, 10).forEach(id -> repository.save(new User(id, user.getFirstname(), user.getLastname())));
+
+		assertThat(repository.findUsersByLastnameStartsWith("last", Limit.of(5))).hasSize(5);
 	}
 }

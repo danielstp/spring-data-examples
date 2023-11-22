@@ -1,11 +1,11 @@
 /*
- * Copyright 2017-2018 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,10 +15,11 @@
  */
 package example.springdata.jpa.compositions;
 
+import jakarta.persistence.PersistenceUnitUtil;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
 
 import org.springframework.data.jpa.domain.AbstractPersistable;
 import org.springframework.data.jpa.repository.support.JpaMetamodelEntityInformation;
@@ -57,7 +58,7 @@ public class FlushOnSaveRepositoryImpl<T> implements FlushOnSaveRepository<T> {
 	 */
 	private <S extends T> void doSave(S entity) {
 
-		EntityInformation<Object, S> entityInformation = getEntityInformation(entity);
+		var entityInformation = getEntityInformation(entity);
 
 		if (entityInformation.isNew(entity)) {
 			entityManager.persist(entity);
@@ -84,12 +85,12 @@ public class FlushOnSaveRepositoryImpl<T> implements FlushOnSaveRepository<T> {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private <S extends T> EntityInformation<Object, S> getEntityInformation(S entity) {
 
-		Class<?> userClass = ClassUtils.getUserClass(entity.getClass());
+		var userClass = ClassUtils.getUserClass(entity.getClass());
 
 		if (entity instanceof AbstractPersistable<?>) {
-			return new JpaPersistableEntityInformation(userClass, entityManager.getMetamodel());
+			return new JpaPersistableEntityInformation(userClass, entityManager.getMetamodel(),entityManager.getEntityManagerFactory().getPersistenceUnitUtil() );
 		}
 
-		return new JpaMetamodelEntityInformation(userClass, entityManager.getMetamodel());
+		return new JpaMetamodelEntityInformation(userClass, entityManager.getMetamodel(), entityManager.getEntityManagerFactory().getPersistenceUnitUtil());
 	}
 }

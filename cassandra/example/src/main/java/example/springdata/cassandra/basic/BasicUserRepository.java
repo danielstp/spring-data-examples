@@ -1,11 +1,11 @@
 /*
- * Copyright 2013-2018 the original author or authors.
+ * Copyright 2013-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,11 +18,12 @@ package example.springdata.cassandra.basic;
 import java.util.List;
 
 import org.springframework.data.cassandra.repository.Query;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.repository.CrudRepository;
 
 /**
- * Simple repository interface for {@link User} instances. The interface is used to declare so called query methods,
- * methods to retrieve single entities or collections of them.
+ * Simple repository interface for {@link User} instances. The interface is used to declare the so-called query methods,
+ * i.e. methods to retrieve single entities or collections of them.
  *
  * @author Thomas Darimont
  */
@@ -55,4 +56,13 @@ public interface BasicUserRepository extends CrudRepository<User, Long> {
 	 * @return
 	 */
 	List<User> findUsersByLastnameStartsWith(String lastnamePrefix);
+
+	/**
+	 * Same as {@link #findUsersByLastnameStartsWith(String)} but reducing the result size to a given {@link Limit}.
+	 *
+	 * @param lastnamePrefix
+	 * @param maxResults the maximum number of results returned.
+	 * @return
+	 */
+	List<User> findUsersByLastnameStartsWith(String lastnamePrefix, Limit maxResults);
 }

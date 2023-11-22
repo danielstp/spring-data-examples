@@ -1,11 +1,11 @@
 /*
- * Copyright 2015-2018 the original author or authors.
+ * Copyright 2015-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,15 +15,8 @@
  */
 package example;
 
-import example.users.Password;
 import example.users.UserManagement;
-import example.users.Username;
 
-import java.util.stream.IntStream;
-
-import javax.annotation.PostConstruct;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -53,19 +46,6 @@ public class Application {
 
 	public static void main(String... args) {
 		SpringApplication.run(Application.class, args);
-	}
-
-	@Autowired UserManagement userManagement;
-
-	/**
-	 * Creates a few sample users.
-	 */
-	@PostConstruct
-	public void init() {
-
-		IntStream.range(0, 41).forEach(index -> {
-			userManagement.register(new Username("user" + index), Password.raw("foobar"));
-		});
 	}
 
 	/**

@@ -1,11 +1,11 @@
 /*
- * Copyright 2015-2018 the original author or authors.
+ * Copyright 2015-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,30 +22,44 @@ import example.springdata.mongodb.customer.Customer;
 import java.util.Map;
 
 import org.bson.Document;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.script.ExecutableMongoScript;
 import org.springframework.data.mongodb.core.script.NamedMongoScript;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 /**
  * @author Christoph Strobl
  * @author Oliver Gierke
  */
-@RunWith(SpringRunner.class)
-@SpringBootTest
-public class ServersideScriptTests {
+@Testcontainers
+@DataMongoTest
+class ServersideScriptTests {
+
+	@Container //
+	private static MongoDBContainer mongoDBContainer = new MongoDBContainer(
+			DockerImageName.parse("mongo:3.6"));
+
+	@DynamicPropertySource
+	static void setProperties(DynamicPropertyRegistry registry) {
+		registry.add("spring.data.mongodb.uri", mongoDBContainer::getReplicaSetUrl);
+	}
 
 	@Autowired AdvancedRepository repository;
 	@Autowired MongoOperations operations;
 
-	@Before
-	public void setUp() {
+	@BeforeEach
+	void setUp() {
 
 		if (!operations.collectionExists(Customer.class)) {
 			operations.createCollection(Customer.class);
@@ -60,7 +74,7 @@ public class ServersideScriptTests {
 	 * Store and call an arbitrary JavaScript function (in this case a simple echo script) via its name.
 	 */
 	@Test
-	public void saveAndCallScriptViaName() {
+	void saveAndCallScriptViaName() {
 
 		operations.scriptOps()
 				.register(new NamedMongoScript("echoScript", new ExecutableMongoScript("function(x) { return x; }")));
@@ -73,10 +87,10 @@ public class ServersideScriptTests {
 	 * {@link Map#putIfAbsent(Object, Object)}
 	 */
 	@Test
-	@Ignore
-	public void complexScriptExecutionSimulatingPutIfAbsent() {
+	@Disabled
+	void complexScriptExecutionSimulatingPutIfAbsent() {
 
-		Customer ned = new Customer("Ned", "Stark");
+		var ned = new Customer("Ned", "Stark");
 		ned.setId("ned-stark");
 
 		// #1: on first insert null has to be returned
@@ -94,14 +108,14 @@ public class ServersideScriptTests {
 
 	private ExecutableMongoScript createExecutablePutIfAbsentScript(Customer customer) {
 
-		String collectionName = operations.getCollectionName(Customer.class);
-		Object id = operations.getConverter().getMappingContext().getRequiredPersistentEntity(Customer.class)
+		var collectionName = operations.getCollectionName(Customer.class);
+		var id = operations.getConverter().getMappingContext().getRequiredPersistentEntity(Customer.class)
 				.getIdentifierAccessor(customer).getIdentifier();
 
-		Document document = new Document();
+		var document = new Document();
 		operations.getConverter().write(customer, document);
 
-		String scriptString = String.format(
+		var scriptString = String.format(
 				"object  =  db.%1$s.findOne({\"_id\": \"%2$s\"}); if (object == null) { db.%1s.insert(%3$s); return null; } else { return object; }",
 				collectionName, id, document);
 

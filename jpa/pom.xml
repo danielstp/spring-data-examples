@@ -1,5 +1,5 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>spring-data-jpa-examples</artifactId>
@@ -13,20 +13,22 @@
 
 	<name>Spring Data JPA - Examples</name>
 	<description>Sample projects for Spring Data JPA</description>
-	<url>http://projects.spring.io/spring-data-jpa</url>
-	<inceptionYear>2011-2014</inceptionYear>
+	<url>https://spring.io/projects/spring-data-jpa</url>
+	<inceptionYear>2011</inceptionYear>
 
 	<modules>
+		<module>deferred</module>
+		<module>envers</module>
 		<module>example</module>
-		<module>showcase</module>
 		<module>interceptors</module>
-		<module>java8</module>
-		<module>jpa21</module>
-		<module>security</module>
+		<!-- <module>jpa21</module> -->
 		<module>multiple-datasources</module>
-		<module>eclipselink</module>
 		<module>query-by-example</module>
+		<module>security</module>
+		<module>showcase</module>
 		<module>vavr</module>
+		<module>multitenant</module>
+		<module>graalvm-native</module>
 	</modules>
 
 	<profiles>
@@ -36,6 +38,17 @@
 				<hibernate.version>5.3.0.Final</hibernate.version>
 			</properties>
 		</profile>
+		<profile>
+			<id>java-next</id>
+
+			<activation>
+				<jdk>[8,14]</jdk>
+			</activation>
+
+			<modules>
+				<module>eclipselink</module>
+			</modules>
+		</profile>
 	</profiles>
 
 	<dependencies>
@@ -43,11 +56,6 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>joda-time</groupId>
-			<artifactId>joda-time</artifactId>
 		</dependency>
 
 		<dependency>

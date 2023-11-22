@@ -3,7 +3,12 @@
 .springBeans
 .settings/
 target/
+.mvn/.gradle-enterprise
 
 #IntelliJ Stuff
 .idea
 *.iml
+
+#Geode Stuff
+*.log
+*.dat

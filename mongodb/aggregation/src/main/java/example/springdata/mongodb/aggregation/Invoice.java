@@ -1,11 +1,11 @@
 /*
- * Copyright 2013-2018 the original author or authors.
+ * Copyright 2013-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,20 +17,12 @@ package example.springdata.mongodb.aggregation;
 
 import java.util.List;
 
-import lombok.Value;
-
 /**
  * A DTO to represent invoices.
  *
  * @author Thomas Darimont
  * @author Oliver Gierke
  */
-@Value
-public class Invoice {
+public record Invoice(String orderId, double taxAmount, double netAmount, double totalAmount, List<LineItem> items) {
 
-	private final String orderId;
-	private final double taxAmount;
-	private final double netAmount;
-	private final double totalAmount;
-	private final List<LineItem> items;
 }

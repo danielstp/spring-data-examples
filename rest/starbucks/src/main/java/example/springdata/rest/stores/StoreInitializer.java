@@ -1,11 +1,11 @@
 /*
- * Copyright 2014-2018 the original author or authors.
+ * Copyright 2014-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.UUID;
 
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.file.FlatFileItemReader;
@@ -31,12 +32,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.geo.Point;
 import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.index.IndexResolver;
 import org.springframework.stereotype.Component;
 
 /**
- * Component initializing a hand full of Starbucks stores and persisting them through a {@link StoreRepository}.
+ * Component initializing a handful of Starbucks stores and persisting them through a {@link StoreRepository}.
  *
  * @author Oliver Gierke
+ * @author Mark Paluch
  */
 @Slf4j
 @Component
@@ -49,7 +52,12 @@ public class StoreInitializer {
 			return;
 		}
 
-		List<Store> stores = readStores();
+		var indexDefinitions = IndexResolver.create(operations.getConverter().getMappingContext())
+				.resolveIndexFor(Store.class);
+
+		indexDefinitions.forEach(operations.indexOps(Store.class)::ensureIndex);
+
+		var stores = readStores();
 		log.info("Importing {} stores into MongoDB…", stores.size());
 		repository.saveAll(stores);
 		log.info("Successfully imported {} stores.", repository.count());
@@ -57,34 +65,34 @@ public class StoreInitializer {
 
 	/**
 	 * Reads a file {@code starbucks.csv} from the class path and parses it into {@link Store} instances about to
-	 * persisted.
+	 * be persisted.
 	 *
 	 * @return
 	 * @throws Exception
 	 */
-	public static List<Store> readStores() throws Exception {
+	private static List<Store> readStores() throws Exception {
 
-		ClassPathResource resource = new ClassPathResource("starbucks.csv");
-		Scanner scanner = new Scanner(resource.getInputStream());
-		String line = scanner.nextLine();
+		var resource = new ClassPathResource("starbucks.csv");
+		var scanner = new Scanner(resource.getInputStream());
+		var line = scanner.nextLine();
 		scanner.close();
 
-		FlatFileItemReader<Store> itemReader = new FlatFileItemReader<Store>();
+		var itemReader = new FlatFileItemReader<Store>();
 		itemReader.setResource(resource);
 
 		// DelimitedLineTokenizer defaults to comma as its delimiter
-		DelimitedLineTokenizer tokenizer = new DelimitedLineTokenizer();
+		var tokenizer = new DelimitedLineTokenizer();
 		tokenizer.setNames(line.split(","));
 		tokenizer.setStrict(false);
 
-		DefaultLineMapper<Store> lineMapper = new DefaultLineMapper<Store>();
+		var lineMapper = new DefaultLineMapper<Store>();
 		lineMapper.setFieldSetMapper(fields -> {
 
-			Point location = new Point(fields.readDouble("Longitude"), fields.readDouble("Latitude"));
-			Address address = new Address(fields.readString("Street Address"), fields.readString("City"),
+			var location = new Point(fields.readDouble("Longitude"), fields.readDouble("Latitude"));
+			var address = new Address(fields.readString("Street Address"), fields.readString("City"),
 					fields.readString("Zip"), location);
 
-			return new Store(fields.readString("Name"), address);
+			return new Store(UUID.randomUUID(), fields.readString("Name"), address);
 		});
 
 		lineMapper.setLineTokenizer(tokenizer);

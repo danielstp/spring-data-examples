@@ -1,11 +1,11 @@
 /*
- * Copyright 2013-2018 the original author or authors.
+ * Copyright 2013-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,7 +28,7 @@ import org.springframework.jdbc.core.support.JdbcDaoSupport;
 import org.springframework.stereotype.Component;
 
 /**
- * Class with the implementation of the custom repository code. Uses JDBC in this case. For basic programatic setup see
+ * Class with the implementation of the custom repository code. Uses JDBC in this case. For basic programmatic setup see
  * {@link UserRepositoryImpl} for examples.
  * <p>
  * As you need to hand the instance a {@link javax.sql.DataSource} or
@@ -75,7 +75,7 @@ class UserRepositoryImplJdbc extends JdbcDaoSupport implements UserRepositoryCus
 		 */
 		public User mapRow(ResultSet rs, int rowNum) throws SQLException {
 
-			User user = new User(rs.getLong("id"));
+			var user = new User(rs.getLong("id"));
 			user.setUsername(rs.getString("username"));
 			user.setLastname(rs.getString("lastname"));
 			user.setFirstname(rs.getString("firstname"));

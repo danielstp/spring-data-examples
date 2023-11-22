@@ -1,11 +1,11 @@
 /*
- * Copyright 2016-2018 the original author or authors.
+ * Copyright 2016-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,33 +20,33 @@ import static org.assertj.core.api.Assertions.*;
 import example.springdata.cassandra.util.CassandraKeyspace;
 
 import java.util.Arrays;
+import java.util.Currency;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.cassandra.core.CassandraOperations;
-import org.springframework.test.context.junit4.SpringRunner;
 
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.querybuilder.QueryBuilder;
+import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.data.TupleValue;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 
 /**
  * @author Mark Paluch
  */
-@RunWith(SpringRunner.class)
+@CassandraKeyspace
 @SpringBootTest(classes = ConverterConfiguration.class)
-public class ConversionIntegrationTests {
-
-	@ClassRule public final static CassandraKeyspace CASSANDRA_KEYSPACE = CassandraKeyspace.onLocalhost();
+class ConversionIntegrationTests {
 
 	@Autowired CassandraOperations operations;
 
-	@Before
-	public void setUp() throws Exception {
-		operations.getCqlOperations().execute("TRUNCATE addressbook");
+	@BeforeEach
+	void setUp() {
+		operations.truncate(Addressbook.class);
 	}
 
 	/**
@@ -54,9 +54,9 @@ public class ConversionIntegrationTests {
 	 * custom {@link example.springdata.cassandra.convert.ConverterConfiguration.PersonWriteConverter}.
 	 */
 	@Test
-	public void shouldCreateAddressbook() {
+	void shouldCreateAddressbook() {
 
-		Addressbook addressbook = new Addressbook();
+		var addressbook = new Addressbook();
 		addressbook.setId("private");
 
 		addressbook.setMe(new Contact("Walter", "White"));
@@ -64,7 +64,7 @@ public class ConversionIntegrationTests {
 
 		operations.insert(addressbook);
 
-		Row row = operations.selectOne(QueryBuilder.select().from("addressbook"), Row.class);
+		var row = operations.selectOne(QueryBuilder.selectFrom("addressbook").all().asCql(), Row.class);
 
 		assertThat(row).isNotNull();
 
@@ -78,9 +78,9 @@ public class ConversionIntegrationTests {
 	 * custom {@link example.springdata.cassandra.convert.ConverterConfiguration.PersonReadConverter}.
 	 */
 	@Test
-	public void shouldReadAddressbook() {
+	void shouldReadAddressbook() {
 
-		Addressbook addressbook = new Addressbook();
+		var addressbook = new Addressbook();
 		addressbook.setId("private");
 
 		addressbook.setMe(new Contact("Walter", "White"));
@@ -88,7 +88,7 @@ public class ConversionIntegrationTests {
 
 		operations.insert(addressbook);
 
-		Addressbook loaded = operations.selectOne(QueryBuilder.select().from("addressbook"), Addressbook.class);
+		var loaded = operations.selectOne(QueryBuilder.selectFrom("addressbook").all().asCql(), Addressbook.class);
 
 		assertThat(loaded.getMe()).isEqualTo(addressbook.getMe());
 		assertThat(loaded.getFriends()).isEqualTo(addressbook.getFriends());
@@ -100,18 +100,53 @@ public class ConversionIntegrationTests {
 	 * {@link example.springdata.cassandra.convert.ConverterConfiguration.CustomAddressbookReadConverter}.
 	 */
 	@Test
-	public void shouldReadCustomAddressbook() {
+	void shouldReadCustomAddressbook() {
 
-		Addressbook addressbook = new Addressbook();
+		var addressbook = new Addressbook();
 		addressbook.setId("private");
 
 		addressbook.setMe(new Contact("Walter", "White"));
 
 		operations.insert(addressbook);
 
-		CustomAddressbook loaded = operations.selectOne(QueryBuilder.select().from("addressbook"), CustomAddressbook.class);
+		var loaded = operations.selectOne(QueryBuilder.selectFrom("addressbook").all().asCql(),
+				CustomAddressbook.class);
 
-		assertThat(loaded.getTheId()).isEqualTo(addressbook.getId());
-		assertThat(loaded.getMyDetailsAsJson()).contains("\"firstname\":\"Walter\"");
+		assertThat(loaded.theId()).isEqualTo(addressbook.getId());
+		assertThat(loaded.myDetailsAsJson()).contains("\"firstname\":\"Walter\"");
+	}
+
+	/**
+	 * Creates and stores a new {@link Addressbook} inside of Cassandra writing map and tuple columns.
+	 */
+	@Test
+	void shouldWriteConvertedMapsAndTuples() {
+
+		var addressbook = new Addressbook();
+		addressbook.setId("private");
+
+		Map<Integer, Currency> preferredCurrencies = new HashMap<>();
+		preferredCurrencies.put(1, Currency.getInstance("USD"));
+		preferredCurrencies.put(2, Currency.getInstance("EUR"));
+
+		var address = new Address("3828 Piermont Dr", "Albuquerque", "87111");
+
+		addressbook.setPreferredCurrencies(preferredCurrencies);
+		addressbook.setAddress(address);
+
+		operations.insert(addressbook);
+
+		var row = operations.selectOne(QueryBuilder.selectFrom("addressbook").all().asCql(), Row.class);
+
+		assertThat(row).isNotNull();
+
+		var tupleValue = row.getTupleValue("address");
+		assertThat(tupleValue.getString(0)).isEqualTo(address.address());
+		assertThat(tupleValue.getString(1)).isEqualTo(address.city());
+		assertThat(tupleValue.getString(2)).isEqualTo(address.zip());
+
+		var rawPreferredCurrencies = row.getMap("preferredCurrencies", Integer.class, String.class);
+
+		assertThat(rawPreferredCurrencies).containsEntry(1, "USD").containsEntry(2, "EUR");
 	}
 }

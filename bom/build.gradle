@@ -1,32 +1,25 @@
-buildscript {
-	repositories {
-		jcenter()
-	}
-	dependencies {
-		classpath 'io.spring.gradle:dependency-management-plugin:0.5.0.RELEASE'
-	}
-}
-
-apply plugin: 'io.spring.dependency-management'
-apply plugin: 'java'
-
-ext {
-	springVersion = '4.1.6.RELEASE'
-	springDataVersion = 'Fowler-RELEASE'
+plugins {
+	id 'io.spring.dependency-management' version '1.0.6.RELEASE'
+	id 'java'
 }
 
 repositories {
-	jcenter()
+	mavenCentral()
+}
+
+ext {
+	springVersion = '5.3.9'
+	springDataVersion = '2021.0.4'
 }
 
 dependencyManagement {
 	imports {
 		mavenBom "org.springframework:spring-framework-bom:${springVersion}"
-		mavenBom "org.springframework.data:spring-data-releasetrain:${springDataVersion}"
+		mavenBom "org.springframework.data:spring-data-bom:${springDataVersion}"
 	}
 }
 
 dependencies {
 	compile 'org.springframework.data:spring-data-rest-webmvc'
-	compile 'org.springframework.data:spring-data-mongodb'
+	compile 'org.springframework.data:spring-data-jpa'
 }

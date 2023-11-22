@@ -1,11 +1,11 @@
 /*
- * Copyright 2015-2018 the original author or authors.
+ * Copyright 2015-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,7 +15,7 @@
  */
 package example.users;
 
-import javax.persistence.Embeddable;
+import jakarta.persistence.Embeddable;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -56,7 +56,7 @@ public class Password implements CharSequence {
 
 	/**
 	 * Creates a new encrypted {@link Password} for the given {@link String}. Note how this method is package protected so
-	 * that encrypted passwords can only created by components in this package and not accidentally by clients using the
+	 * that encrypted passwords can only be created by components in this package and not accidentally by clients using the
 	 * type from other packages.
 	 *
 	 * @param password must not be {@literal null} or empty.

@@ -1,11 +1,11 @@
 /*
- * Copyright 2018 the original author or authors.
+ * Copyright 2018-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -49,26 +49,22 @@ public class ReactiveTransitionService {
 
 	public Mono<Integer> run(Integer id) {
 
-		return template.inTransaction().execute(action -> {
-
 			return lookup(id) //
-					.flatMap(process -> start(action, process)) //
+					.flatMap(process -> start(template, process)) //
 					.flatMap(it -> verify(it)) //
-					.flatMap(process -> finish(action, process));
-
-		}).next().map(Process::getId);
+					.flatMap(process -> finish(template, process)).map(Process::id);
 	}
 
 	private Mono<Process> finish(ReactiveMongoOperations operations, Process process) {
 
-		return operations.update(Process.class).matching(Query.query(Criteria.where("id").is(process.getId())))
+		return operations.update(Process.class).matching(Query.query(Criteria.where("id").is(process.id())))
 				.apply(Update.update("state", State.DONE).inc("transitionCount", 1)).first() //
 				.then(Mono.just(process));
 	}
 
 	Mono<Process> start(ReactiveMongoOperations operations, Process process) {
 
-		return operations.update(Process.class).matching(Query.query(Criteria.where("id").is(process.getId())))
+		return operations.update(Process.class).matching(Query.query(Criteria.where("id").is(process.id())))
 				.apply(Update.update("state", State.ACTIVE).inc("transitionCount", 1)).first() //
 				.then(Mono.just(process));
 	}
@@ -79,7 +75,7 @@ public class ReactiveTransitionService {
 
 	Mono<Process> verify(Process process) {
 
-		Assert.state(process.getId() % 3 != 0, "We're sorry but we needed to drop that one");
+		Assert.state(process.id() % 3 != 0, "We're sorry but we needed to drop that one");
 		return Mono.just(process);
 	}
 }

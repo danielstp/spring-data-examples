@@ -1,11 +1,11 @@
 /*
- * Copyright 2017-2018 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,10 +17,11 @@ package example.springdata.couchbase.model;
 
 import lombok.Data;
 
+import org.springframework.data.annotation.Id;
 import org.springframework.data.couchbase.core.mapping.Document;
+import org.springframework.data.couchbase.core.mapping.Field;
 
-import com.couchbase.client.java.repository.annotation.Field;
-import com.couchbase.client.java.repository.annotation.Id;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * A domain object representing an Airline
@@ -29,26 +30,18 @@ import com.couchbase.client.java.repository.annotation.Id;
  */
 @Data
 @Document
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Airline {
 
-	@Id
-	private String id;
+	private @Id String id;
 
-	@Field
-	private String type;
-
-	@Field
 	private String name;
 
-	@Field("iata")
-	private String iataCode;
+	private String iata;
 
-	@Field
 	private String icao;
 
-	@Field
 	private String callsign;
 
-	@Field
 	private String country;
 }

@@ -1,11 +1,11 @@
 /*
- * Copyright 2014-2018 the original author or authors.
+ * Copyright 2014-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,37 +15,36 @@
  */
 package example.springdata.rest.security;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.junit4.SpringRunner;
 
 /**
  * Collection of test cases used to verify method-level security.
  *
  * @author Greg Turnquist
  * @author Oliver Gierke
+ * @author Divya Srivastava
  */
-@RunWith(SpringRunner.class)
 @SpringBootTest
-public class MethodLevelSecurityTests {
+class MethodLevelSecurityTests {
 
 	@Autowired ItemRepository itemRepository;
 
-	@Before
-	public void setUp() {
+	@BeforeEach
+	void setUp() {
 		SecurityContextHolder.clearContext();
 	}
 
 	@Test
-	public void rejectsMethodInvocationsForNoAuth() {
+	void rejectsMethodInvocationsForNoAuth() {
 
 		try {
 			itemRepository.findAll();
@@ -70,7 +69,7 @@ public class MethodLevelSecurityTests {
 	}
 
 	@Test
-	public void rejectsMethodInvocationsForAuthWithInsufficientPermissions() {
+	void rejectsMethodInvocationsForAuthWithInsufficientPermissions() {
 
 		SecurityUtils.runAs("system", "system", "ROLE_USER");
 
@@ -91,13 +90,13 @@ public class MethodLevelSecurityTests {
 	}
 
 	@Test
-	public void allowsMethodInvocationsForAuthWithSufficientPermissions() {
+	void allowsMethodInvocationsForAuthWithSufficientPermissions() {
 
 		SecurityUtils.runAs("system", "system", "ROLE_USER", "ROLE_ADMIN");
 
 		itemRepository.findAll();
 
-		Item item = itemRepository.save(new Item("MacBook Pro"));
+		var item = itemRepository.save(new Item("MacBook Pro"));
 
 		itemRepository.deleteById(item.getId());
 	}

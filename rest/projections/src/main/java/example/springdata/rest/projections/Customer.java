@@ -1,11 +1,11 @@
 /*
- * Copyright 2014-2018 the original author or authors.
+ * Copyright 2014-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,14 +15,14 @@
  */
 package example.springdata.rest.projections;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.OneToOne;
-
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
 
 /**
  * @author Oliver Gierke
@@ -36,7 +36,7 @@ public class Customer {
 	private final String firstname, lastname;
 	private final Gender gender;
 
-	@OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)//
+	@OneToOne(cascade = CascadeType.ALL, orphanRemoval = true) //
 	private final Address address;
 
 	Customer() {
@@ -46,7 +46,7 @@ public class Customer {
 		this.gender = null;
 	}
 
-	static enum Gender {
-		MALE, FEMALE;
+	enum Gender {
+		MALE, FEMALE
 	}
 }

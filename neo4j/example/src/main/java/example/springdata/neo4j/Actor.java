@@ -1,11 +1,11 @@
 /*
- * Copyright 2015-2018 the original author or authors.
+ * Copyright 2015-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,39 +16,59 @@
 
 package example.springdata.neo4j;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
+import java.util.ArrayList;
+import java.util.List;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import org.neo4j.ogm.annotation.GraphId;
-import org.neo4j.ogm.annotation.NodeEntity;
-import org.neo4j.ogm.annotation.Relationship;
+import org.springframework.data.neo4j.core.schema.GeneratedValue;
+import org.springframework.data.neo4j.core.schema.Id;
+import org.springframework.data.neo4j.core.schema.Node;
+import org.springframework.data.neo4j.core.schema.Relationship;
 
 /**
  * An Actor node entity.
  *
  * @author Luanne Misquitta
  * @author Oliver Gierke
+ * @author Michael J. Simons
  */
-@NodeEntity(label = "Actor")
-@NoArgsConstructor(force = true, access = AccessLevel.PRIVATE)
-@RequiredArgsConstructor
-@Getter
+@Node
 public class Actor {
 
-	private @GraphId Long id;
+	private @Id @GeneratedValue Long id;
 	private final String name;
-	private final @Relationship(type = "ACTED_IN") Set<Role> roles = new HashSet<>();
+	private @Relationship(type = "ACTED_IN") List<Roles> roles = new ArrayList<>();
 
-	public void actedIn(Movie movie, String roleName) {
+	public Actor(String name) {
+		this.name = name;
+	}
 
-		Role role = new Role(this, roleName, movie);
+	public void actedIn(Movie movie, List<String> roleNames) {
 
-		roles.add(role);
-		movie.getRoles().add(role);
+		var movieRoles = new Roles(roleNames);
+		movieRoles.setMovie(movie);
+
+		this.roles.add(movieRoles);
+	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public List<Roles> getRoles() {
+		return roles;
+	}
+
+	public void setRoles(List<Roles> roles) {
+		this.roles = roles;
+	}
+
+	@Override public String toString() {
+		return "Actor{" +
+			"name='" + name + '\'' +
+			'}';
 	}
 }

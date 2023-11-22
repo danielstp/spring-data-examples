@@ -1,11 +1,11 @@
 /*
- * Copyright 2014-2018 the original author or authors.
+ * Copyright 2014-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,49 +18,49 @@ package example.springdata.mongodb.textsearch;
 import static example.springdata.mongodb.util.ConsoleResultPrinter.*;
 import static org.springframework.data.mongodb.core.query.Query.*;
 
-import java.util.List;
+import example.springdata.mongodb.util.MongoContainers;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.TextCriteria;
 import org.springframework.data.mongodb.core.query.TextQuery;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+
+import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
  * @author Christoph Strobl
  * @author Thomas Darimont
  */
-@RunWith(SpringRunner.class)
-@SpringBootTest
-public class TextSearchTemplateTests {
+@Testcontainers
+@DataMongoTest
+class TextSearchTemplateTests {
+
+	@Container //
+	private static MongoDBContainer mongoDBContainer = MongoContainers.getDefaultContainer();
+
+	@DynamicPropertySource
+	static void setProperties(DynamicPropertyRegistry registry) {
+		registry.add("spring.data.mongodb.uri", mongoDBContainer::getReplicaSetUrl);
+	}
 
 	@Autowired MongoOperations operations;
 
-	// @Before
-	// public void setUp() throws Exception {
-	//
-	// MongoProperties properties = new MongoProperties();
-	//
-	// operations = new MongoTemplate(properties.createMongoClient(null), properties.getMongoClientDatabase());
-	// operations.dropCollection(BlogPost.class);
-	//
-	// createIndex();
-	//
-	// BlogPostInitializer.INSTANCE.initialize(this.operations);
-	// }
-
 	/**
-	 * Show how to do simple matching. Note that text search is case insensitive and will also find entries like
+	 * Show how to do simple matching. Note that text search is case-insensitive and will also find entries like
 	 * {@literal releases}.
 	 */
 	@Test
-	public void findAllBlogPostsWithRelease() {
+	void findAllBlogPostsWithRelease() {
 
-		TextCriteria criteria = TextCriteria.forDefaultLanguage().matchingAny("release");
-		List<BlogPost> blogPosts = operations.find(query(criteria), BlogPost.class);
+		var criteria = TextCriteria.forDefaultLanguage().matchingAny("release");
+		var blogPosts = operations.find(query(criteria), BlogPost.class);
 
 		printResult(blogPosts, criteria);
 	}
@@ -69,15 +69,15 @@ public class TextSearchTemplateTests {
 	 * Sort by relevance relying on the value marked with {@link org.springframework.data.mongodb.core.mapping.TextScore}.
 	 */
 	@Test
-	public void findAllBlogPostsByPhraseSortByScore() {
+	void findAllBlogPostsByPhraseSortByScore() {
 
-		TextCriteria criteria = TextCriteria.forDefaultLanguage().matchingPhrase("release");
+		var criteria = TextCriteria.forDefaultLanguage().matchingPhrase("release");
 
-		TextQuery query = new TextQuery(criteria);
+		var query = new TextQuery(criteria);
 		query.setScoreFieldName("score");
 		query.sortByScore();
 
-		List<BlogPost> blogPosts = operations.find(query, BlogPost.class);
+		var blogPosts = operations.find(query, BlogPost.class);
 
 		printResult(blogPosts, criteria);
 	}

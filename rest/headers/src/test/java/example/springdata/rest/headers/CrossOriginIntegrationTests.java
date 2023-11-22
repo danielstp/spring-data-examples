@@ -1,11 +1,11 @@
 /*
- * Copyright 2017-2018 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,12 +22,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.net.URI;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
@@ -37,16 +35,15 @@ import org.springframework.web.context.WebApplicationContext;
  *
  * @author Mark Paluch
  */
-@RunWith(SpringRunner.class)
 @SpringBootTest
 public class CrossOriginIntegrationTests {
 
 	@Autowired WebApplicationContext context;
 	@Autowired CustomerRepository customers;
 
-	MockMvc mvc;
+	private MockMvc mvc;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		this.mvc = MockMvcBuilders.webAppContextSetup(context).build();
 	}
@@ -54,8 +51,8 @@ public class CrossOriginIntegrationTests {
 	@Test
 	public void executePreflightRequest() throws Exception {
 
-		String origin = "http://localhost:1234";
-		URI uri = URI.create("/customers");
+		var origin = "http://localhost:1234";
+		var uri = URI.create("/customers");
 
 		mvc.perform(options(uri).header(ORIGIN, origin).header(ACCESS_CONTROL_REQUEST_METHOD, "POST")) //
 				.andExpect(header().string(ACCESS_CONTROL_ALLOW_ORIGIN, is(origin))) //
@@ -66,8 +63,8 @@ public class CrossOriginIntegrationTests {
 	@Test
 	public void executeCrossOriginRequest() throws Exception {
 
-		String origin = "http://localhost:1234";
-		URI uri = URI.create("/customers");
+		var origin = "http://localhost:1234";
+		var uri = URI.create("/customers");
 
 		mvc.perform(get(uri).header(ORIGIN, origin)) //
 				.andExpect(status().isOk()) //
@@ -77,8 +74,8 @@ public class CrossOriginIntegrationTests {
 	@Test
 	public void rejectCrossOriginRequest() throws Exception {
 
-		String origin = "http://foo.bar";
-		URI uri = URI.create("/customers");
+		var origin = "http://foo.bar";
+		var uri = URI.create("/customers");
 
 		mvc.perform(get(uri).header(ORIGIN, origin)) //
 				.andExpect(status().isForbidden());

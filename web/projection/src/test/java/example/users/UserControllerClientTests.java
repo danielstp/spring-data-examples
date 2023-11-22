@@ -1,11 +1,11 @@
 /*
- * Copyright 2016-2018 the original author or authors.
+ * Copyright 2016-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,13 +15,10 @@
  */
 package example.users;
 
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
-
 import example.users.UserController.UserPayload;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
@@ -37,17 +34,20 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Integration tests for {@link UserController} to demonstrate client-side resilience of the payload type against
  * changes in the representation.
  *
  * @author Oliver Gierke
+ * @author Divya Srivastava
+ * @author Jens Schauder
  */
-@RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
-public class UserControllerClientTests {
+class UserControllerClientTests {
 
 	@Autowired TestRestTemplate template;
 
@@ -70,28 +70,28 @@ public class UserControllerClientTests {
 	}
 
 	@Test
-	public void accessJsonFieldsOnSimplePayload() {
+	void accessJsonFieldsOnSimplePayload() {
 		assertDave(issueGet("/", MediaType.APPLICATION_JSON));
 	}
 
 	@Test
-	public void accessJsonFieldsOnNestedPayload() {
+	void accessJsonFieldsOnNestedPayload() {
 		assertDave(issueGet("/changed", MediaType.APPLICATION_JSON));
 	}
 
 	@Test
-	public void accessXmlElementsOnSimplePayload() {
+	void accessXmlElementsOnSimplePayload() {
 		assertDave(issueGet("/", MediaType.APPLICATION_XML));
 	}
 
 	@Test
-	public void accessXmlElementsOnNestedPayload() {
+	void accessXmlElementsOnNestedPayload() {
 		assertDave(issueGet("/changed", MediaType.APPLICATION_XML));
 	}
 
 	private UserPayload issueGet(String path, MediaType mediaType) {
 
-		HttpHeaders headers = new HttpHeaders();
+		var headers = new HttpHeaders();
 		headers.add(HttpHeaders.ACCEPT, mediaType.toString());
 
 		return template.exchange(path, HttpMethod.GET, new HttpEntity<Void>(headers), UserPayload.class).getBody();
@@ -99,7 +99,7 @@ public class UserControllerClientTests {
 
 	private static void assertDave(UserPayload payload) {
 
-		assertThat(payload.getFirstname(), is("Dave"));
-		assertThat(payload.getLastname(), is("Matthews"));
+		assertThat(payload.getFirstname()).isEqualTo("Dave");
+		assertThat(payload.getLastname()).isEqualTo("Matthews");
 	}
 }

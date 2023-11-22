@@ -1,11 +1,11 @@
 /*
- * Copyright 2013-2018 the original author or authors.
+ * Copyright 2013-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,13 +17,10 @@ package example.springdata.jpa.custom;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.util.List;
+import org.junit.jupiter.api.Test;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -31,12 +28,13 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * @author Oliver Gierke
  * @author Thomas Darimont
+ * @author Divya Srivastava
  */
-@RunWith(SpringRunner.class)
+
 @Transactional
 @SpringBootTest
 // @ActiveProfiles("jdbc") // Uncomment @ActiveProfiles to enable the JDBC Implementation of the custom repository
-public class UserRepositoryCustomizationTests {
+class UserRepositoryCustomizationTests {
 
 	@Autowired UserRepository repository;
 
@@ -44,9 +42,9 @@ public class UserRepositoryCustomizationTests {
 	 * Tests inserting a user and asserts it can be loaded again.
 	 */
 	@Test
-	public void testInsert() {
+	void testInsert() {
 
-		User user = new User();
+		var user = new User();
 		user.setUsername("username");
 
 		user = repository.save(user);
@@ -55,15 +53,15 @@ public class UserRepositoryCustomizationTests {
 	}
 
 	@Test
-	public void saveAndFindByLastNameAndFindByUserName() {
+	void saveAndFindByLastNameAndFindByUserName() {
 
-		User user = new User();
+		var user = new User();
 		user.setUsername("foobar");
 		user.setLastname("lastname");
 
 		user = repository.save(user);
 
-		List<User> users = repository.findByLastname("lastname");
+		var users = repository.findByLastname("lastname");
 
 		assertThat(users).contains(user);
 		assertThat(user).isEqualTo(repository.findByTheUsersName("foobar"));
@@ -73,14 +71,14 @@ public class UserRepositoryCustomizationTests {
 	 * Test invocation of custom method.
 	 */
 	@Test
-	public void testCustomMethod() {
+	void testCustomMethod() {
 
-		User user = new User();
+		var user = new User();
 		user.setUsername("username");
 
 		user = repository.save(user);
 
-		List<User> users = repository.myCustomBatchOperation();
+		var users = repository.myCustomBatchOperation();
 
 		assertThat(users).contains(user);
 	}

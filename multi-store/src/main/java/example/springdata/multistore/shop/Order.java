@@ -1,11 +1,11 @@
 /*
- * Copyright 2013-2018 the original author or authors.
+ * Copyright 2013-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,7 +22,7 @@ import java.util.List;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.data.annotation.PersistenceConstructor;
+import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
@@ -33,7 +33,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
  * @author Oliver Gierke
  */
 @Data
-@RequiredArgsConstructor(onConstructor = @__(@PersistenceConstructor))
+@RequiredArgsConstructor(onConstructor = @__(@PersistenceCreator))
 @Document
 public class Order {
 
@@ -49,7 +49,7 @@ public class Order {
 	 * @param orderDate
 	 */
 	public Order(String customerId, Date orderDate) {
-		this(null, customerId, orderDate, new ArrayList<LineItem>());
+		this(null, customerId, orderDate, new ArrayList<>());
 	}
 
 	/**

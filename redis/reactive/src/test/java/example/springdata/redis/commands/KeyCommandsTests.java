@@ -1,11 +1,11 @@
 /*
- * Copyright 2016-2018 the original author or authors.
+ * Copyright 2016-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,9 +16,8 @@
 package example.springdata.redis.commands;
 
 import example.springdata.redis.RedisTestConfiguration;
-import example.springdata.redis.test.util.RequiresRedisServer;
+import example.springdata.redis.test.condition.EnabledOnRedisAvailable;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.nio.ByteBuffer;
@@ -26,20 +25,17 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.UUID;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.redis.connection.ReactiveListCommands.PopResult;
 import org.springframework.data.redis.connection.ReactiveRedisConnection;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.connection.ReactiveStringCommands.SetCommand;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.data.redis.util.ByteUtils;
-import org.springframework.test.context.junit4.SpringRunner;
 
 /**
  * Show usage of reactive operations on Redis keys using low level API provided by
@@ -47,12 +43,9 @@ import org.springframework.test.context.junit4.SpringRunner;
  *
  * @author Mark Paluch
  */
-@RunWith(SpringRunner.class)
 @SpringBootTest(classes = RedisTestConfiguration.class)
-public class KeyCommandsTests {
-
-	// we only want to run this tests when redis is up an running
-	public static @ClassRule RequiresRedisServer requiresServer = RequiresRedisServer.onLocalhost();
+@EnabledOnRedisAvailable
+class KeyCommandsTests {
 
 	private static final String PREFIX = KeyCommandsTests.class.getSimpleName();
 	private static final String KEY_PATTERN = PREFIX + "*";
@@ -62,8 +55,8 @@ public class KeyCommandsTests {
 	private ReactiveRedisConnection connection;
 	private RedisSerializer<String> serializer = new StringRedisSerializer();
 
-	@Before
-	public void setUp() {
+	@BeforeEach
+	void setUp() {
 		this.connection = connectionFactory.getReactiveConnection();
 	}
 
@@ -73,50 +66,52 @@ public class KeyCommandsTests {
 	 * All keys will be loaded within <strong>one single</strong> operation.
 	 */
 	@Test
-	public void iterateOverKeysMatchingPrefixUsingKeysCommand() {
+	void iterateOverKeysMatchingPrefixUsingKeysCommand() {
 
 		generateRandomKeys(50);
 
-		Mono<Long> keyCount = connection.keyCommands() //
+		var keyCount = connection.keyCommands() //
 				.keys(ByteBuffer.wrap(serializer.serialize(KEY_PATTERN))) //
 				.flatMapMany(Flux::fromIterable) //
 				.doOnNext(byteBuffer -> System.out.println(toString(byteBuffer))) //
 				.count() //
 				.doOnSuccess(count -> System.out.println(String.format("Total No. found: %s", count)));
 
-		StepVerifier.create(keyCount).expectNext(50L).verifyComplete();
+		keyCount.as(StepVerifier::create).expectNext(50L).verifyComplete();
 	}
 
 	/**
 	 * Uses {@code RPUSH} to store an item inside a list and {@code BRPOP} <br />
 	 */
 	@Test
-	public void storeToListAndPop() {
+	void storeToListAndPop() {
 
-		Mono<PopResult> popResult = connection.listCommands()
+		var popResult = connection.listCommands()
 				.brPop(Collections.singletonList(ByteBuffer.wrap("list".getBytes())), Duration.ofSeconds(5));
 
-		Mono<Long> llen = connection.listCommands().lLen(ByteBuffer.wrap("list".getBytes()));
+		var llen = connection.listCommands().lLen(ByteBuffer.wrap("list".getBytes()));
 
-		Mono<Long> popAndLlen = connection.listCommands() //
+		var popAndLlen = connection.listCommands() //
 				.rPush(ByteBuffer.wrap("list".getBytes()), Collections.singletonList(ByteBuffer.wrap("item".getBytes())))
 				.flatMap(l -> popResult) //
 				.doOnNext(result -> System.out.println(toString(result.getValue()))) //
 				.flatMap(result -> llen) //
 				.doOnNext(count -> System.out.println(String.format("Total items in list left: %s", count)));//
 
-		StepVerifier.create(popAndLlen).expectNext(0L).verifyComplete();
+		popAndLlen.as(StepVerifier::create).expectNext(0L).verifyComplete();
 	}
 
 	private void generateRandomKeys(int nrKeys) {
 
-		Flux<String> keyFlux = Flux.range(0, nrKeys).map(i -> (PREFIX + "-" + i));
+		var keyFlux = Flux.range(0, nrKeys).map(i -> (PREFIX + "-" + i));
 
-		Flux<SetCommand> generator = keyFlux.map(String::getBytes).map(ByteBuffer::wrap) //
+		var generator = keyFlux.map(String::getBytes).map(ByteBuffer::wrap) //
 				.map(key -> SetCommand.set(key) //
 						.value(ByteBuffer.wrap(UUID.randomUUID().toString().getBytes())));
 
-		StepVerifier.create(connection.stringCommands().set(generator)).expectNextCount(nrKeys).verifyComplete();
+		connection.stringCommands().set(generator).as(StepVerifier::create) //
+				.expectNextCount(nrKeys) //
+				.verifyComplete();
 
 	}
 

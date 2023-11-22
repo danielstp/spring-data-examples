@@ -1,11 +1,11 @@
 /*
- * Copyright 2015-2018 the original author or authors.
+ * Copyright 2015-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,14 +15,12 @@
  */
 package example.springdata.rest.headers;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 /**
  * Integration tests to bootstrap the application.
@@ -30,7 +28,6 @@ import org.springframework.test.context.junit4.SpringRunner;
  * @author Oliver Gierke
  * @soundtrack The Intersphere - Out of phase (Live at Alte Feuerwache Mannheim)
  */
-@RunWith(SpringRunner.class)
 @SpringBootTest
 public class ApplicationIntegrationTests {
 
@@ -39,9 +36,9 @@ public class ApplicationIntegrationTests {
 	@Test
 	public void initializesRepositoryWithSampleData() {
 
-		Iterable<Customer> result = repository.findAll();
+		var result = repository.findAll();
 
-		assertThat(result, is(iterableWithSize(1)));
-		assertThat(result.iterator().next().getLastModifiedDate(), is(notNullValue()));
+		assertThat(result).hasSize(1);
+		assertThat(result.iterator().next().getLastModifiedDate()).isNotNull();
 	}
 }

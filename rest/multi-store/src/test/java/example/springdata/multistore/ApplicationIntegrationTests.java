@@ -1,11 +1,11 @@
 /*
- * Copyright 2015-2018 the original author or authors.
+ * Copyright 2015-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,11 +21,9 @@ import example.springdata.multistore.treasure.Treasure;
 import example.springdata.multistore.treasure.TreasureRepository;
 import lombok.extern.slf4j.Slf4j;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 /**
  * Integration test to show the usage of repositories backed by different stores.
@@ -33,7 +31,6 @@ import org.springframework.test.context.junit4.SpringRunner;
  * @author Oliver Gierke
  */
 @Slf4j
-@RunWith(SpringRunner.class)
 @SpringBootTest
 public class ApplicationIntegrationTests {
 
@@ -46,7 +43,7 @@ public class ApplicationIntegrationTests {
 		personRepository.save(new Person("Frodo", "Baggins"));
 		personRepository.save(new Person("Bilbo", "Baggins"));
 
-		for (Person person : personRepository.findAll()) {
+		for (var person : personRepository.findAll()) {
 			log.info("Hello " + person.toString());
 		}
 
@@ -54,7 +51,7 @@ public class ApplicationIntegrationTests {
 		treasureRepository.save(new Treasure("Sting", "Made by the Elves"));
 		treasureRepository.save(new Treasure("Sauron's ring", "One ring to rule them all"));
 
-		for (Treasure treasure : treasureRepository.findAll()) {
+		for (var treasure : treasureRepository.findAll()) {
 			log.info("Found treasure " + treasure.toString());
 		}
 	}

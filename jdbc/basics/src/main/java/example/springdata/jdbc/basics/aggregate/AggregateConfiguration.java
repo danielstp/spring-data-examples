@@ -1,11 +1,11 @@
 /*
- * Copyright 2017-2018 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,36 +15,43 @@
  */
 package example.springdata.jdbc.basics.aggregate;
 
+import static java.util.Arrays.*;
+
 import java.sql.Clob;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.jdbc.core.mapping.event.BeforeSaveEvent;
-import org.springframework.data.jdbc.core.mapping.ConversionCustomizer;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
-import org.springframework.data.jdbc.core.mapping.NamingStrategy;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
+import org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
+import org.springframework.data.relational.core.mapping.event.BeforeConvertEvent;
+import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.datasource.init.DataSourceInitializer;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.lang.Nullable;
+
+import javax.sql.DataSource;
 
 /**
  * @author Jens Schauder
+ * @author Mark Paluch
  */
 @Configuration
 @EnableJdbcRepositories
-public class AggregateConfiguration {
+public class AggregateConfiguration extends AbstractJdbcConfiguration {
 
 	final AtomicInteger id = new AtomicInteger(0);
 
 	@Bean
 	public ApplicationListener<?> idSetting() {
 
-		return (ApplicationListener<BeforeSaveEvent>) event -> {
+		return (ApplicationListener<BeforeConvertEvent>) event -> {
 
 			if (event.getEntity() instanceof LegoSet) {
 				setIds((LegoSet) event.getEntity());
@@ -58,53 +65,17 @@ public class AggregateConfiguration {
 			legoSet.setId(id.incrementAndGet());
 		}
 
-		Manual manual = legoSet.getManual();
+		var manual = legoSet.getManual();
 
 		if (manual != null) {
 			manual.setId((long) legoSet.getId());
 		}
 	}
 
-	@Bean
-	public NamingStrategy namingStrategy() {
+	@Override
+	public JdbcCustomConversions jdbcCustomConversions() {
 
-		Map<String, String> columnAliases = new HashMap<String, String>();
-		columnAliases.put("lego_set.int_maximum_age", "max_age");
-		columnAliases.put("lego_set.int_minimum_age", "min_age");
-
-		Map<String, String> reverseColumnAliases = new HashMap<String, String>();
-		reverseColumnAliases.put("manual", "handbuch_id");
-
-		Map<String, String> keyColumnAliases = new HashMap<String, String>();
-		keyColumnAliases.put("models", "name");
-
-		return new NamingStrategy() {
-
-			@Override
-			public String getColumnName(JdbcPersistentProperty property) {
-
-				String defaultName = NamingStrategy.super.getColumnName(property);
-				String key = getTableName(property.getOwner().getType()) + "." + defaultName;
-				return columnAliases.computeIfAbsent(key, __ -> defaultName);
-			}
-
-			@Override
-			public String getReverseColumnName(JdbcPersistentProperty property) {
-				return reverseColumnAliases.computeIfAbsent(property.getName(),
-						__ -> NamingStrategy.super.getReverseColumnName(property));
-			}
-
-			@Override
-			public String getKeyColumn(JdbcPersistentProperty property) {
-				return keyColumnAliases.computeIfAbsent(property.getName(), __ -> NamingStrategy.super.getKeyColumn(property));
-			}
-		};
-	}
-
-	@Bean
-	public ConversionCustomizer conversionCustomizer() {
-
-		return conversions -> conversions.addConverter(new Converter<Clob, String>() {
+		return new JdbcCustomConversions(asList(new Converter<Clob, String>() {
 
 			@Nullable
 			@Override
@@ -120,6 +91,25 @@ public class AggregateConfiguration {
 					throw new IllegalStateException("Failed to convert CLOB to String.", e);
 				}
 			}
-		});
+		}));
 	}
+
+	@Bean
+	public NamedParameterJdbcTemplate namedParameterJdbcTemplate(JdbcOperations operations) {
+		return new NamedParameterJdbcTemplate(operations);
+	}
+
+	@Bean
+	DataSourceInitializer initializer(DataSource dataSource) {
+
+		var initializer = new DataSourceInitializer();
+		initializer.setDataSource(dataSource);
+
+		var script = new ClassPathResource("schema.sql");
+		var populator = new ResourceDatabasePopulator(script);
+		initializer.setDatabasePopulator(populator);
+
+		return initializer;
+	}
+
 }

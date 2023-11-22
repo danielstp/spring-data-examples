@@ -1,11 +1,11 @@
 /*
- * Copyright 2015-2018 the original author or authors.
+ * Copyright 2015-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,53 +15,54 @@
  */
 package example.springdata.rest.projections;
 
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 
 /**
- * Test cases showing the programatic use of a {@link ProjectionFactory}.
+ * Test cases showing the programmatic use of a {@link ProjectionFactory}.
  *
  * @author Oliver Gierke
+ * @author Divya Srivastava
  */
-public class SimpleProjectionTests {
+class SimpleProjectionTests {
 
-	ProjectionFactory factory = new SpelAwareProxyProjectionFactory();
+	private ProjectionFactory factory = new SpelAwareProxyProjectionFactory();
 
 	@Test
-	public void createMapBackedProjection() {
+	void createMapBackedProjection() {
 
-		Customer customer = factory.createProjection(Customer.class);
+		var customer = factory.createProjection(Customer.class);
 		customer.setFirstname("Dave");
 		customer.setLastname("Matthews");
 
 		// Verify accessors work
-		assertThat(customer.getFirstname(), is("Dave"));
-		assertThat(customer.getLastname(), is("Matthews"));
+		assertThat(customer.getFirstname()).isEqualTo("Dave");
+		assertThat(customer.getLastname()).isEqualTo("Matthews");
 
 		// Verify evaluating a SpEL expression
-		assertThat(customer.getFullName(), is("Dave Matthews"));
+		assertThat(customer.getFullName()).isEqualTo("Dave Matthews");
 	}
 
 	@Test
-	public void createsProxyForSourceMap() {
+	void createsProxyForSourceMap() {
 
 		Map<String, Object> backingMap = new HashMap<>();
 		backingMap.put("firstname", "Dave");
 		backingMap.put("lastname", "Matthews");
 
-		Customer customer = factory.createProjection(Customer.class, backingMap);
+		var customer = factory.createProjection(Customer.class, backingMap);
 
 		// Verify accessors work
-		assertThat(customer.getFirstname(), is("Dave"));
-		assertThat(customer.getLastname(), is("Matthews"));
+		assertThat(customer.getFirstname()).isEqualTo("Dave");
+		assertThat(customer.getLastname()).isEqualTo("Matthews");
 	}
 
 	interface Customer {

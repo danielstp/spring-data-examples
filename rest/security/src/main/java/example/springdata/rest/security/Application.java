@@ -1,11 +1,11 @@
 /*
- * Copyright 2014-2018 the original author or authors.
+ * Copyright 2014-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,7 +15,7 @@
  */
 package example.springdata.rest.security;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -26,12 +26,11 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.User.UserBuilder;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.SecurityFilterChain;
 
 /**
  * This example shows various ways to secure Spring Data REST applications using Spring Security
@@ -49,7 +48,7 @@ public class Application {
 	}
 
 	/**
-	 * Pre-load the system with employees and items.
+	 * Preload the system with employees and items.
 	 */
 	public @PostConstruct void init() {
 
@@ -80,7 +79,7 @@ public class Application {
 	@Configuration
 	@EnableGlobalMethodSecurity(prePostEnabled = true)
 	@EnableWebSecurity
-	static class SecurityConfiguration extends WebSecurityConfigurerAdapter {
+	static class SecurityConfiguration  {
 
 		/**
 		 * This section defines the user accounts which can be used for authentication as well as the roles each user has.
@@ -88,10 +87,10 @@ public class Application {
 		@Bean
 		InMemoryUserDetailsManager userDetailsManager() {
 
-			UserBuilder builder = User.withDefaultPasswordEncoder();
+			var builder = User.builder().passwordEncoder(PasswordEncoderFactories.createDelegatingPasswordEncoder()::encode);
 
-			UserDetails greg = builder.username("greg").password("turnquist").roles("USER").build();
-			UserDetails ollie = builder.username("ollie").password("gierke").roles("USER", "ADMIN").build();
+			var greg = builder.username("greg").password("turnquist").roles("USER").build();
+			var ollie = builder.username("ollie").password("gierke").roles("USER", "ADMIN").build();
 
 			return new InMemoryUserDetailsManager(greg, ollie);
 		}
@@ -108,16 +107,15 @@ public class Application {
 		 *
 		 * @param http
 		 * @throws Exception
-		 * @see org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter#configure(org.springframework.security.config.annotation.web.builders.HttpSecurity)
 		 */
-		@Override
-		protected void configure(HttpSecurity http) throws Exception {
+		@Bean
+		protected SecurityFilterChain configure(HttpSecurity http) throws Exception {
 
-			http.httpBasic().and().authorizeRequests().//
-					antMatchers(HttpMethod.POST, "/employees").hasRole("ADMIN").//
-					antMatchers(HttpMethod.PUT, "/employees/**").hasRole("ADMIN").//
-					antMatchers(HttpMethod.PATCH, "/employees/**").hasRole("ADMIN").and().//
-					csrf().disable();
+			return http.httpBasic().and().authorizeRequests().//
+					requestMatchers(HttpMethod.POST, "/employees").hasRole("ADMIN").//
+					requestMatchers(HttpMethod.PUT, "/employees/**").hasRole("ADMIN").//
+					requestMatchers(HttpMethod.PATCH, "/employees/**").hasRole("ADMIN").and().//
+					csrf().disable().build();
 		}
 	}
 }

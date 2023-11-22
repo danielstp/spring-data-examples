@@ -1,11 +1,11 @@
 /*
- * Copyright 2011-2018 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,15 +17,11 @@ package example.springdata.jpa.showcase.snippets.test;
 
 import static example.springdata.jpa.showcase.snippets.CustomerSpecifications.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.springframework.data.jpa.domain.Specifications.*;
 
 import example.springdata.jpa.showcase.after.CustomerRepository;
-import example.springdata.jpa.showcase.core.Customer;
 
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDate;
 
-import org.joda.time.LocalDate;
 import org.springframework.data.jpa.domain.Specification;
 
 /**
@@ -39,10 +35,10 @@ public class CustomerRepositoryIntegrationTest {
 
 	public void findsCustomersBySpecification() throws Exception {
 
-		Optional<Customer> dave = repository.findById(1L);
+		var dave = repository.findById(1L);
 
-		LocalDate expiryLimit = new LocalDate(2011, 3, 1);
-		List<Customer> result = repository.findAll(where(accountExpiresBefore(expiryLimit)));
+		var expiryLimit = LocalDate.of(2011, 3, 1);
+		var result = repository.findAll(accountExpiresBefore(expiryLimit));
 
 		assertThat(result).hasSize(1);
 		assertThat(dave).hasValueSatisfying(it -> assertThat(result).contains(it));

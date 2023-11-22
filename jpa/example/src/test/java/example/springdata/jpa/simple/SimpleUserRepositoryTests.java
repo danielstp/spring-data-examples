@@ -1,11 +1,11 @@
 /*
- * Copyright 2013-2018 the original author or authors.
+ * Copyright 2013-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,25 +15,32 @@
  */
 package example.springdata.jpa.simple;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.domain.Sort.Direction.*;
+
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -42,17 +49,19 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Oliver Gierke
  * @author Thomas Darimont
  * @author Christoph Strobl
+ * @author Divya Srivastava
+ * @author Jens Schauder
  */
-@RunWith(SpringRunner.class)
 @Transactional
 @SpringBootTest
-public class SimpleUserRepositoryTests {
+@Slf4j
+class SimpleUserRepositoryTests {
 
 	@Autowired SimpleUserRepository repository;
-	User user;
+	private User user;
 
-	@Before
-	public void setUp() {
+	@BeforeEach
+	void setUp() {
 
 		user = new User();
 		user.setUsername("foobar");
@@ -61,7 +70,7 @@ public class SimpleUserRepositoryTests {
 	}
 
 	@Test
-	public void findSavedUserById() {
+	void findSavedUserById() {
 
 		user = repository.save(user);
 
@@ -69,7 +78,7 @@ public class SimpleUserRepositoryTests {
 	}
 
 	@Test
-	public void findSavedUserByLastname() throws Exception {
+	void findSavedUserByLastname() {
 
 		user = repository.save(user);
 
@@ -77,7 +86,23 @@ public class SimpleUserRepositoryTests {
 	}
 
 	@Test
-	public void findByFirstnameOrLastname() throws Exception {
+	void findLimitedNumberOfUsersViaDerivedQuery() {
+
+		IntStream.range(0, 10).forEach($ -> repository.save(new User(user.getFirstname(), user.getLastname())));
+
+		assertThat(repository.findByLastname("lastname", Limit.of(5))).hasSize(5);
+	}
+
+	@Test
+	void findLimitedNumberOfUsersViaAnnotatedQuery() {
+
+		IntStream.range(0, 10).forEach($ -> repository.save(new User(user.getFirstname(), user.getLastname())));
+
+		assertThat(repository.findByFirstname(user.getFirstname(), Limit.of(5))).hasSize(5);
+	}
+
+	@Test
+	void findByFirstnameOrLastname() {
 
 		user = repository.save(user);
 
@@ -85,7 +110,7 @@ public class SimpleUserRepositoryTests {
 	}
 
 	@Test
-	public void useOptionalAsReturnAndParameterType() {
+	void useOptionalAsReturnAndParameterType() {
 
 		assertThat(repository.findByUsername(Optional.of("foobar"))).isEmpty();
 
@@ -95,14 +120,14 @@ public class SimpleUserRepositoryTests {
 	}
 
 	@Test
-	public void removeByLastname() {
+	void removeByLastname() {
 
 		// create a 2nd user with the same lastname as user
-		User user2 = new User();
+		var user2 = new User();
 		user2.setLastname(user.getLastname());
 
 		// create a 3rd user as control group
-		User user3 = new User();
+		var user3 = new User();
 		user3.setLastname("no-positive-match");
 
 		repository.saveAll(Arrays.asList(user, user2, user3));
@@ -112,17 +137,17 @@ public class SimpleUserRepositoryTests {
 	}
 
 	@Test
-	public void useSliceToLoadContent() {
+	void useSliceToLoadContent() {
 
 		repository.deleteAll();
 
 		// int repository with some values that can be ordered
-		int totalNumberUsers = 11;
-		List<User> source = new ArrayList<User>(totalNumberUsers);
+		var totalNumberUsers = 11;
+		List<User> source = new ArrayList<>(totalNumberUsers);
 
-		for (int i = 1; i <= totalNumberUsers; i++) {
+		for (var i = 1; i <= totalNumberUsers; i++) {
 
-			User user = new User();
+			var user = new User();
 			user.setLastname(this.user.getLastname());
 			user.setUsername(user.getLastname() + "-" + String.format("%03d", i));
 			source.add(user);
@@ -130,78 +155,147 @@ public class SimpleUserRepositoryTests {
 
 		repository.saveAll(source);
 
-		Slice<User> users = repository.findByLastnameOrderByUsernameAsc(this.user.getLastname(), PageRequest.of(1, 5));
+		var users = repository.findByLastnameOrderByUsernameAsc(this.user.getLastname(), PageRequest.of(1, 5));
 
 		assertThat(users).containsAll(source.subList(5, 10));
 	}
 
 	@Test
-	public void findFirst2ByOrderByLastnameAsc() {
+	void findFirst2ByOrderByLastnameAsc() {
 
-		User user0 = new User();
+		var user0 = new User();
 		user0.setLastname("lastname-0");
 
-		User user1 = new User();
+		var user1 = new User();
 		user1.setLastname("lastname-1");
 
-		User user2 = new User();
-		user2.setLastname("lastname-2");
-
-		// we deliberatly save the items in reverse
-		repository.saveAll(Arrays.asList(user2, user1, user0));
-
-		List<User> result = repository.findFirst2ByOrderByLastnameAsc();
-
-		assertThat(result.size(), is(2));
-		assertThat(result, hasItems(user0, user1));
-	}
-
-	@Test
-	public void findTop2ByWithSort() {
-
-		User user0 = new User();
-		user0.setLastname("lastname-0");
-
-		User user1 = new User();
-		user1.setLastname("lastname-1");
-
-		User user2 = new User();
+		var user2 = new User();
 		user2.setLastname("lastname-2");
 
 		// we deliberately save the items in reverse
 		repository.saveAll(Arrays.asList(user2, user1, user0));
 
-		List<User> resultAsc = repository.findTop2By(new Sort(ASC, "lastname"));
+		var result = repository.findFirst2ByOrderByLastnameAsc();
 
-		assertThat(resultAsc.size(), is(2));
-		assertThat(resultAsc, hasItems(user0, user1));
-
-		List<User> resultDesc = repository.findTop2By(new Sort(DESC, "lastname"));
-
-		assertThat(resultDesc.size(), is(2));
-		assertThat(resultDesc, hasItems(user1, user2));
+		assertThat(result).containsExactly(user0, user1);
 	}
 
 	@Test
-	public void findByFirstnameOrLastnameUsingSpEL() {
+	void findTop2ByWithSort() {
 
-		User first = new User();
+		var user0 = new User();
+		user0.setLastname("lastname-0");
+
+		var user1 = new User();
+		user1.setLastname("lastname-1");
+
+		var user2 = new User();
+		user2.setLastname("lastname-2");
+
+		// we deliberately save the items in reverse
+		repository.saveAll(Arrays.asList(user2, user1, user0));
+
+		var resultAsc = repository.findTop2By(Sort.by(ASC, "lastname"));
+
+		assertThat(resultAsc).containsExactly(user0, user1);
+
+		var resultDesc = repository.findTop2By(Sort.by(DESC, "lastname"));
+
+		assertThat(resultDesc).containsExactly(user2, user1);
+	}
+
+	@Test
+	void findByFirstnameOrLastnameUsingSpEL() {
+
+		var first = new User();
 		first.setLastname("lastname");
 
-		User second = new User();
+		var second = new User();
 		second.setFirstname("firstname");
 
-		User third = new User();
+		var third = new User();
 
 		repository.saveAll(Arrays.asList(first, second, third));
 
-		User reference = new User();
+		var reference = new User();
 		reference.setFirstname("firstname");
 		reference.setLastname("lastname");
 
-		Iterable<User> users = repository.findByFirstnameOrLastname(reference);
+		var users = repository.findByFirstnameOrLastname(reference);
 
-		assertThat(users, is(iterableWithSize(2)));
-		assertThat(users, hasItems(first, second));
+		assertThat(users).containsExactly(first, second);
+	}
+
+	/**
+	 * Streaming data from the store by using a repository method that returns a {@link Stream}. Note, that since the
+	 * resulting {@link Stream} contains state it needs to be closed explicitly after use!
+	 */
+	@Test
+	void useJava8StreamsWithCustomQuery() {
+
+		var user1 = repository.save(new User("Customer1", "Foo"));
+		var user2 = repository.save(new User("Customer2", "Bar"));
+
+		try (var stream = repository.streamAllCustomers()) {
+			assertThat(stream.collect(Collectors.toList())).contains(user1, user2);
+		}
+	}
+
+	/**
+	 * Streaming data from the store by using a repository method that returns a {@link Stream} with a derived query.
+	 * Note, that since the resulting {@link Stream} contains state it needs to be closed explicitly after use!
+	 */
+	@Test
+	void useJava8StreamsWithDerivedQuery() {
+
+		var user1 = repository.save(new User("Customer1", "Foo"));
+		var user2 = repository.save(new User("Customer2", "Bar"));
+
+		try (var stream = repository.findAllByLastnameIsNotNull()) {
+			assertThat(stream.collect(Collectors.toList())).contains(user1, user2);
+		}
+	}
+
+	/**
+	 * Query methods using streaming need to be used inside a surrounding transaction to keep the connection open while
+	 * the stream is consumed. We simulate that not being the case by actively disabling the transaction here.
+	 */
+	@Test
+	@Transactional(propagation = Propagation.NOT_SUPPORTED)
+	void rejectsStreamExecutionIfNoSurroundingTransactionActive() {
+		Assertions.assertThrows(InvalidDataAccessApiUsageException.class, () -> {
+			repository.findAllByLastnameIsNotNull();
+		});
+	}
+
+	/**
+	 * Here we demonstrate the usage of {@link CompletableFuture} as a result wrapper for asynchronous repository query
+	 * methods. Note, that we need to disable the surrounding transaction to be able to asynchronously read the written
+	 * data from another thread within the same test method.
+	 */
+	@Test
+	@Transactional(propagation = Propagation.NOT_SUPPORTED)
+	void supportsCompletableFuturesAsReturnTypeWrapper() throws Exception {
+
+		repository.save(new User("Customer1", "Foo"));
+		repository.save(new User("Customer2", "Bar"));
+
+		var future = repository.readAllBy().thenAccept(users -> {
+
+			assertThat(users).hasSize(2);
+			users.forEach(customer -> log.info(customer.toString()));
+			log.info("Completed!");
+		});
+
+		while (!future.isDone()) {
+			log.info("Waiting for the CompletableFuture to finish...");
+			TimeUnit.MILLISECONDS.sleep(500);
+		}
+
+		future.get();
+
+		log.info("Done!");
+
+		repository.deleteAll();
 	}
 }

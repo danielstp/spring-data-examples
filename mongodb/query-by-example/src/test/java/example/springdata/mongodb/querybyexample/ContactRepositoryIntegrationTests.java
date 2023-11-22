@@ -1,11 +1,11 @@
 /*
- * Copyright 2016-2018 the original author or authors.
+ * Copyright 2016-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,21 +15,24 @@
  */
 package example.springdata.mongodb.querybyexample;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.domain.ExampleMatcher.*;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import example.springdata.mongodb.util.MongoContainers;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.data.domain.Example;
-import org.springframework.data.domain.ExampleMatcher.StringMatcher;
 import org.springframework.data.mongodb.core.MongoOperations;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+
+import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
  * Integration test showing the usage of MongoDB Query-by-Example support through Spring Data repositories for a case
@@ -39,19 +42,27 @@ import org.springframework.test.context.junit4.SpringRunner;
  * @author Oliver Gierke
  * @soundtrack Paul van Dyk - VONYC Sessions Episode 496 with guest Armin van Buuren
  */
-@RunWith(SpringRunner.class)
-@SpringBootTest
-public class ContactRepositoryIntegrationTests {
+@Testcontainers
+@DataMongoTest
+class ContactRepositoryIntegrationTests {
+
+	@Container //
+	private static MongoDBContainer mongoDBContainer = MongoContainers.getDefaultContainer();
+
+	@DynamicPropertySource
+	static void setProperties(DynamicPropertyRegistry registry) {
+		registry.add("spring.data.mongodb.uri", mongoDBContainer::getReplicaSetUrl);
+	}
 
 	@Autowired UserRepository userRepository;
 	@Autowired ContactRepository contactRepository;
 	@Autowired MongoOperations mongoOperations;
 
-	Person skyler, walter, flynn;
-	Relative marie, hank;
+	private Person skyler, walter, flynn;
+	private Relative marie, hank;
 
-	@Before
-	public void setUp() {
+	@BeforeEach
+	void setUp() {
 
 		contactRepository.deleteAll();
 
@@ -66,36 +77,36 @@ public class ContactRepositoryIntegrationTests {
 	 * @see #153
 	 */
 	@Test
-	public void countByConcreteSubtypeExample() {
+	void countByConcreteSubtypeExample() {
 
-		Example<Person> example = Example.of(new Person(null, null, null));
+		var example = Example.of(new Person(null, null, null));
 
-		assertThat(userRepository.count(example), is(3L));
+		assertThat(userRepository.count(example)).isEqualTo(3L);
 	}
 
 	/**
 	 * @see #153
 	 */
 	@Test
-	public void findAllPersonsBySimpleExample() {
+	void findAllPersonsBySimpleExample() {
 
-		Example<Person> example = Example.of(new Person(".*", null, null), //
+		var example = Example.of(new Person(".*", null, null), //
 				matching().withStringMatcher(StringMatcher.REGEX));
 
-		assertThat(userRepository.findAll(example), containsInAnyOrder(skyler, walter, flynn));
-		assertThat(userRepository.findAll(example), not(containsInAnyOrder(hank, marie)));
+		assertThat(userRepository.findAll(example)).contains(skyler, walter, flynn);
+		assertThat((Iterable) userRepository.findAll(example)).doesNotContain(hank, marie);
 	}
 
 	/**
 	 * @see #153
 	 */
 	@Test
-	public void findAllRelativesBySimpleExample() {
+	void findAllRelativesBySimpleExample() {
 
-		Example<Relative> example = Example.of(new Relative(".*", null, null), //
+		var example = Example.of(new Relative(".*", null, null), //
 				matching().withStringMatcher(StringMatcher.REGEX));
 
-		assertThat(contactRepository.findAll(example), containsInAnyOrder(hank, marie));
-		assertThat(contactRepository.findAll(example), not(containsInAnyOrder(skyler, walter, flynn)));
+		assertThat(contactRepository.findAll(example)).contains(hank, marie);
+		assertThat((Iterable) contactRepository.findAll(example)).doesNotContain(skyler, walter, flynn);
 	}
 }

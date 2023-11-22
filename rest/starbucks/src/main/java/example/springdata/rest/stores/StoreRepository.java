@@ -1,11 +1,11 @@
 /*
- * Copyright 2014-2018 the original author or authors.
+ * Copyright 2014-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,9 +23,11 @@ import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Point;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.querydsl.binding.QuerydslBindings;
+import org.springframework.data.querydsl.binding.SingleValueBinding;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.rest.core.annotation.RestResource;
 
+import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.core.types.dsl.StringPath;
 
 /**
@@ -47,7 +49,7 @@ public interface StoreRepository extends PagingAndSortingRepository<Store, UUID>
 	 */
 	default void customize(QuerydslBindings bindings, QStore store) {
 
-		bindings.bind(store.address.city).first((path, value) -> path.endsWith(value));
-		bindings.bind(String.class).first((StringPath path, String value) -> path.contains(value));
+		bindings.bind(store.address.city).first(StringExpression::endsWith);
+		bindings.bind(String.class).first((SingleValueBinding<StringPath, String>) StringExpression::contains);
 	}
 }

@@ -1,11 +1,11 @@
 /*
- * Copyright 2015-2018 the original author or authors.
+ * Copyright 2015-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,21 +15,26 @@
  */
 package example.springdata.mongodb.security;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
+
+import example.springdata.mongodb.util.MongoContainers;
 
 import java.util.Collections;
-import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+
+import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
  * Integration test for {@link PersonRepository}.
@@ -37,16 +42,24 @@ import org.springframework.test.context.junit4.SpringRunner;
  * @author Thomas Darimont
  * @author Oliver Gierke
  */
-@RunWith(SpringRunner.class)
+@Testcontainers
 @SpringBootTest
-public class PersonRepositoryIntegrationTest {
+class PersonRepositoryIntegrationTest {
+
+	@Container //
+	private static MongoDBContainer mongoDBContainer = MongoContainers.getDefaultContainer();
+
+	@DynamicPropertySource
+	static void setProperties(DynamicPropertyRegistry registry) {
+		registry.add("spring.data.mongodb.uri", mongoDBContainer::getReplicaSetUrl);
+	}
 
 	@Autowired PersonRepository repository;
 
-	Person dave, oliver, carter, admin;
+	private Person dave, oliver, carter, admin;
 
-	@Before
-	public void setUp() {
+	@BeforeEach
+	void setUp() {
 
 		repository.deleteAll();
 
@@ -57,26 +70,24 @@ public class PersonRepositoryIntegrationTest {
 	}
 
 	@Test
-	public void nonAdminCallingShouldReturnOnlyItSelfAsPerson() throws Exception {
+	void nonAdminCallingShouldReturnOnlyItSelfAsPerson() throws Exception {
 
 		SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(dave, "x"));
 
-		List<Person> persons = repository.findAllForCurrentUserById();
+		var persons = repository.findAllForCurrentUserById();
 
-		assertThat(persons, hasSize(1));
-		assertThat(persons, contains(dave));
+		assertThat(persons).hasSize(1).containsExactly(dave);
 	}
 
 	@Test
-	public void adminCallingShouldReturnAllUsers() throws Exception {
+	void adminCallingShouldReturnAllUsers() throws Exception {
 
-		UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(admin, "x",
+		var auth = new UsernamePasswordAuthenticationToken(admin, "x",
 				Collections.singleton(new SimpleGrantedAuthority("ROLE_ADMIN")));
 		SecurityContextHolder.getContext().setAuthentication(auth);
 
-		List<Person> persons = repository.findAllForCurrentUserById();
+		var persons = repository.findAllForCurrentUserById();
 
-		assertThat(persons, hasSize(4));
-		assertThat(persons, containsInAnyOrder(admin, dave, carter, oliver));
+		assertThat(persons).hasSize(4).contains(admin, dave, carter, oliver);
 	}
 }

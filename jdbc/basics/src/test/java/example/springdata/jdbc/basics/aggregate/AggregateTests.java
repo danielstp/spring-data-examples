@@ -1,11 +1,11 @@
 /*
- * Copyright 2017-2018 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,37 +24,36 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.assertj.core.groups.Tuple;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureJdbc;
+import org.springframework.boot.test.autoconfigure.data.jdbc.AutoConfigureDataJdbc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit4.SpringRunner;
 
 /**
  * Demonstrates various possibilities to customize the behavior of a repository.
  *
  * @author Jens Schauder
+ * @author Divya Srivastava
  */
-@RunWith(SpringRunner.class)
 @SpringBootTest(classes = AggregateConfiguration.class)
-@AutoConfigureJdbc
+@AutoConfigureDataJdbc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-public class AggregateTests {
+class AggregateTests {
 
 	@Autowired LegoSetRepository repository;
 
 	@Test
-	public void exerciseSomewhatComplexEntity() {
+	void exerciseSomewhatComplexEntity() {
 
-		LegoSet smallCar = createLegoSet("Small Car 01", 5, 12);
+		var smallCar = createLegoSet("Small Car 01", 5, 12);
 		smallCar.setManual(new Manual("Just put all the pieces together in the right order", "Jens Schauder"));
 		smallCar.addModel("suv", "SUV with sliding doors.");
 		smallCar.addModel("roadster", "Slick red roadster.");
 
 		repository.save(smallCar);
-		Iterable<LegoSet> legoSets = repository.findAll();
+		var legoSets = repository.findAll();
 		Output.list(legoSets, "Original LegoSet");
 		checkLegoSets(legoSets, "Just put all the pieces together in the right order", 2);
 
@@ -72,24 +71,23 @@ public class AggregateTests {
 		legoSets = repository.findAll();
 		Output.list(legoSets, "Manual replaced");
 		checkLegoSets(legoSets, "One last attempt: Just build a car! Ok?", 3);
-
 	}
 
 	@Test
-	public void customQueries() {
+	void customQueries() {
 
-		LegoSet smallCars = createLegoSet("Small Car - 01", 5, 10);
+		var smallCarsSetName = "Small Car - 01";
+		var smallCars = createLegoSet(smallCarsSetName, 5, 10);
 		smallCars.setManual(new Manual("Just put all the pieces together in the right order", "Jens Schauder"));
 
 		smallCars.addModel("SUV", "SUV with sliding doors.");
 		smallCars.addModel("roadster", "Slick red roadster.");
 
-		LegoSet f1Racer = createLegoSet("F1 Racer", 6, 15);
+		var f1Racer = createLegoSet("F1 Racer", 6, 15);
 		f1Racer.setManual(new Manual("Build a helicopter or a plane", "M. Shoemaker"));
-
 		f1Racer.addModel("F1 Ferrari 2018", "A very fast red car.");
 
-		LegoSet constructionVehicles = createLegoSet("Construction Vehicles", 3, 6);
+		var constructionVehicles = createLegoSet("Construction Vehicles", 3, 6);
 		constructionVehicles.setManual(
 				new Manual("Build a Road Roler, a Mobile Crane, a Tracked Dumper, or a Backhoe Loader ", "Bob the Builder"));
 
@@ -101,21 +99,23 @@ public class AggregateTests {
 
 		repository.saveAll(Arrays.asList(smallCars, f1Racer, constructionVehicles));
 
-		List<ModelReport> report = repository.reportModelForAge(6);
+		var report = repository.reportModelForAge(6);
 		Output.list(report, "Model Report");
 
 		assertThat(report).hasSize(7)
-				.allMatch(m -> m.getDescription() != null && m.getModelName() != null && m.getSetName() != null);
+				.allMatch(m -> m.description() != null && m.modelName() != null && m.setName() != null);
 
-		int updated = repository.lowerCaseMapKeys();
+		var updated = repository.lowerCaseMapKeys();
 		// SUV, F1 Ferrari 2018 and Muck get updated
 		assertThat(updated).isEqualTo(3);
 
+		var legoSetsByName = repository.findByName(smallCarsSetName);
+		assertThat(legoSetsByName).hasSize(1);
 	}
 
 	private LegoSet createLegoSet(String name, int minimumAge, int maximumAge) {
 
-		LegoSet smallCar = new LegoSet();
+		var smallCar = new LegoSet();
 
 		smallCar.setName(name);
 		smallCar.setMinimumAge(Period.ofYears(minimumAge));

@@ -1,11 +1,11 @@
 /*
- * Copyright 2016-2018 the original author or authors.
+ * Copyright 2016-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,16 +15,14 @@
  */
 package example.springdata.jpa.querybyexample;
 
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Example;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -33,8 +31,10 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * @author Mark Paluch
  * @author Oliver Gierke
+ * @author Divya Srivastava
+ * @author Jens Schauder
  */
-@RunWith(SpringRunner.class)
+
 @Transactional
 @SpringBootTest
 public class UserRepositoryInheritanceIntegrationTests {
@@ -43,7 +43,7 @@ public class UserRepositoryInheritanceIntegrationTests {
 
 	User skyler, walter, flynn;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 
 		repository.deleteAll();
@@ -58,7 +58,7 @@ public class UserRepositoryInheritanceIntegrationTests {
 	 */
 	@Test
 	public void countByExample() {
-		assertThat(repository.count(Example.of(new User(null, "White", null))), is(3L));
+		assertThat(repository.count(Example.of(new User(null, "White", null)))).isEqualTo(3L);
 	}
 
 	/**
@@ -66,6 +66,6 @@ public class UserRepositoryInheritanceIntegrationTests {
 	 */
 	@Test
 	public void countSubtypesByExample() {
-		assertThat(repository.count(Example.of(new SpecialUser(null, "White", null))), is(2L));
+		assertThat(repository.count(Example.of(new SpecialUser(null, "White", null)))).isEqualTo(2L);
 	}
 }

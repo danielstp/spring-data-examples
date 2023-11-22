@@ -1,11 +1,11 @@
 /*
- * Copyright 2018 the original author or authors.
+ * Copyright 2018-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,24 +19,28 @@ import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.mongodb.core.query.Query.*;
 import static org.springframework.data.mongodb.gridfs.GridFsCriteria.*;
 
+import example.springdata.mongodb.util.MongoContainers;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.gridfs.GridFsOperations;
-import org.springframework.data.mongodb.gridfs.GridFsResource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.util.StreamUtils;
 
-import com.mongodb.client.gridfs.model.GridFSFile;
+import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
  * Tests to show the usage of {@link GridFsOperations} with Spring Data MongoDB.
@@ -44,19 +48,27 @@ import com.mongodb.client.gridfs.model.GridFSFile;
  * @author Hartmut Lang
  * @author Mark Paluch
  */
-@RunWith(SpringRunner.class)
-@SpringBootTest
-public class GridFsTests {
+@Testcontainers
+@DataMongoTest
+class GridFsTests {
+
+	@Container //
+	private static MongoDBContainer mongoDBContainer = MongoContainers.getDefaultContainer();
+
+	@DynamicPropertySource
+	static void setProperties(DynamicPropertyRegistry registry) {
+		registry.add("spring.data.mongodb.uri", mongoDBContainer::getReplicaSetUrl);
+	}
 
 	@Autowired GridFsOperations gridFsOperations;
 
-	@Before
-	public void before() {
+	@BeforeEach
+	void before() {
 		gridFsOperations.delete(new Query());
 	}
 
 	@Test
-	public void shouldStoreSimpleFile() throws IOException {
+	void shouldStoreSimpleFile() throws IOException {
 
 		try (InputStream is = new BufferedInputStream(new ClassPathResource("./example-file.txt").getInputStream())) {
 			// store file
@@ -65,28 +77,28 @@ public class GridFsTests {
 		}
 
 		// get file or resource by filename
-		GridFSFile file = gridFsOperations.findOne(query(whereFilename().is("example-file.txt")));
+		var file = gridFsOperations.findOne(query(whereFilename().is("example-file.txt")));
 
 		assertThat(file.getFilename()).isEqualTo("example-file.txt");
 	}
 
 	@Test
-	public void shouldStoreFileWithMetadata() throws IOException {
+	void shouldStoreFileWithMetadata() throws IOException {
 
 		try (InputStream is = new BufferedInputStream(new ClassPathResource("./example-file.txt").getInputStream())) {
 
 			// store file with metaData
-			Customer customerMetaData = new Customer("Hardy", "Lang");
+			var customerMetaData = new Customer("Hardy", "Lang");
 			gridFsOperations.store(is, "example-file.txt", customerMetaData);
 		}
 
 		// search by metaData
-		GridFSFile file = gridFsOperations.findOne(query(whereMetaData("firstName").is("Hardy")));
+		var file = gridFsOperations.findOne(query(whereMetaData("firstName").is("Hardy")));
 		assertThat(file.getFilename()).isEqualTo("example-file.txt");
 	}
 
 	@Test
-	public void shouldStoreAndReadFile() throws IOException {
+	void shouldStoreAndReadFile() throws IOException {
 
 		byte[] bytes;
 		try (InputStream is = new BufferedInputStream(new ClassPathResource("./example-file.txt").getInputStream())) {
@@ -96,10 +108,10 @@ public class GridFsTests {
 		// store file
 		gridFsOperations.store(new ByteArrayInputStream(bytes), "example-file.txt");
 
-		GridFsResource resource = gridFsOperations.getResource("example-file.txt");
+		var resource = gridFsOperations.getResource("example-file.txt");
 
 		byte[] loaded;
-		try (InputStream is = resource.getInputStream()) {
+		try (var is = resource.getInputStream()) {
 			loaded = StreamUtils.copyToByteArray(is);
 		}
 

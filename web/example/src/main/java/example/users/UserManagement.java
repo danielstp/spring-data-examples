@@ -1,11 +1,11 @@
 /*
- * Copyright 2015-2018 the original author or authors.
+ * Copyright 2015-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,12 +16,13 @@
 package example.users;
 
 import java.util.Optional;
+import java.util.stream.IntStream;
 
-import javax.transaction.Transactional;
+import jakarta.annotation.PostConstruct;
+import jakarta.transaction.Transactional;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -57,7 +58,7 @@ public class UserManagement {
 			throw new IllegalArgumentException("User with that name already exists!");
 		});
 
-		Password encryptedPassword = Password.encrypted(encoder.encode(password));
+		var encryptedPassword = Password.encrypted(encoder.encode(password));
 
 		return repository.save(new User(username, encryptedPassword));
 	}
@@ -86,5 +87,16 @@ public class UserManagement {
 		Assert.notNull(username, "Username must not be null!");
 
 		return repository.findByUsername(username);
+	}
+
+	/**
+	 * Creates a few sample users.
+	 */
+	@PostConstruct
+	public void init() {
+
+		IntStream.range(0, 41).forEach(index -> {
+			register(new Username("user" + index), Password.raw("foobar"));
+		});
 	}
 }

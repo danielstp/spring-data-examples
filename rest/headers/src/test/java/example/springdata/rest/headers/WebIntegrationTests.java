@@ -1,11 +1,11 @@
 /*
- * Copyright 2015-2018 the original author or authors.
+ * Copyright 2015-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,20 +17,20 @@ package example.springdata.rest.headers;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.springframework.http.HttpHeaders.*;
-import static org.springframework.restdocs.RestDocumentation.*;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import java.net.URI;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.restdocs.config.RestDocumentationConfigurer;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.restdocs.JUnitRestDocumentation;
+import org.springframework.restdocs.RestDocumentationContextProvider;
+import org.springframework.restdocs.RestDocumentationExtension;
+import org.springframework.restdocs.mockmvc.MockMvcRestDocumentation;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
@@ -40,49 +40,53 @@ import org.springframework.web.util.UriTemplate;
  * @author Oliver Gierke
  * @soundtrack The Intersphere - Out of phase (Live at Alte Feuerwache Mannheim)
  */
-@RunWith(SpringRunner.class)
 @SpringBootTest
+@ExtendWith(RestDocumentationExtension.class)
 public class WebIntegrationTests {
 
-	@Autowired WebApplicationContext context;
-	@Autowired CustomerRepository customers;
+    public final JUnitRestDocumentation restDocumentation = new JUnitRestDocumentation();
 
-	MockMvc mvc;
+    @Autowired
+    WebApplicationContext context;
+    @Autowired
+    CustomerRepository customers;
 
-	@Before
-	public void setUp() {
+    private MockMvc mvc;
 
-		this.mvc = MockMvcBuilders.webAppContextSetup(context).//
-				apply(new RestDocumentationConfigurer()).//
-				build();
-	}
+    @BeforeEach
+    public void setUp(RestDocumentationContextProvider restDocumentation) {
 
-	@Test
-	public void executeConditionalGetRequests() throws Exception {
+        this.mvc = MockMvcBuilders.webAppContextSetup(context).//
+                apply(MockMvcRestDocumentation.documentationConfiguration(restDocumentation)).//
+                build();
+    }
 
-		Customer customer = customers.findAll().iterator().next();
-		URI uri = new UriTemplate("/customers/{id}").expand(customer.getId());
+    @Test
+    public void executeConditionalGetRequests() throws Exception {
 
-		MockHttpServletResponse response = mvc.perform(get(uri)).//
-				andExpect(header().string(ETAG, is(notNullValue()))).//
-				andExpect(header().string(LAST_MODIFIED, is(notNullValue()))).//
-				andReturn().getResponse();
+        var customer = customers.findAll().iterator().next();
+        var uri = new UriTemplate("/customers/{id}").expand(customer.getId());
 
-		// ETag-based
+        var response = mvc.perform(get(uri)).//
+                andExpect(header().string(ETAG, is(notNullValue()))).//
+                andExpect(header().string(LAST_MODIFIED, is(notNullValue()))).//
+                andReturn().getResponse();
 
-		response = mvc.perform(get(uri).header(IF_NONE_MATCH, response.getHeader(ETAG))).//
-				andExpect(status().isNotModified()).//
-				andExpect(header().string(ETAG, is(notNullValue()))).//
-				andExpect(header().string(LAST_MODIFIED, is(notNullValue()))).//
-				andDo(document("if-none-match")).//
-				andReturn().getResponse();
+        // ETag-based
 
-		// Last-modified-based
+        response = mvc.perform(get(uri).header(IF_NONE_MATCH, response.getHeader(ETAG))).//
+                andExpect(status().isNotModified()).//
+                andExpect(header().string(ETAG, is(notNullValue()))).//
+                andExpect(header().string(LAST_MODIFIED, is(notNullValue()))).//
+                andDo(document("if-none-match")).//
+                andReturn().getResponse();
 
-		mvc.perform(get(uri).header(IF_MODIFIED_SINCE, response.getHeader(LAST_MODIFIED))).//
-				andExpect(status().isNotModified()).//
-				andExpect(header().string(ETAG, is(notNullValue()))).//
-				andExpect(header().string(LAST_MODIFIED, is(notNullValue()))).//
-				andDo(document("if-modified-since"));
-	}
+        // Last-modified-based
+
+        mvc.perform(get(uri).header(IF_MODIFIED_SINCE, response.getHeader(LAST_MODIFIED))).//
+                andExpect(status().isNotModified()).//
+                andExpect(header().string(ETAG, is(notNullValue()))).//
+                andExpect(header().string(LAST_MODIFIED, is(notNullValue()))).//
+                andDo(document("if-modified-since"));
+    }
 }

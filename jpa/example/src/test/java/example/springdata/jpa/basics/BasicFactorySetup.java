@@ -1,11 +1,11 @@
 /*
- * Copyright 2013-2018 the original author or authors.
+ * Copyright 2013-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,21 +20,22 @@ import static org.assertj.core.api.Assertions.*;
 import example.springdata.jpa.simple.SimpleUserRepository;
 import example.springdata.jpa.simple.User;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Persistence;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.data.jpa.repository.support.JpaRepositoryFactory;
 
 /**
  * Test case showing how to use the basic {@link GenericDaoFactory}
  *
  * @author Oliver Gierke
+ * @author Divya Srivastava
  */
-public class BasicFactorySetup {
+class BasicFactorySetup {
 
 	private static final EntityManagerFactory factory = Persistence.createEntityManagerFactory("jpa.sample.plain");
 
@@ -48,8 +49,8 @@ public class BasicFactorySetup {
 	 *
 	 * @throws Exception
 	 */
-	@Before
-	public void setUp() {
+	@BeforeEach
+	void setUp() {
 
 		em = factory.createEntityManager();
 
@@ -69,8 +70,8 @@ public class BasicFactorySetup {
 	/**
 	 * Rollback transaction.
 	 */
-	@After
-	public void tearDown() {
+	@AfterEach
+	void tearDown() {
 
 		em.getTransaction().rollback();
 	}
@@ -79,7 +80,7 @@ public class BasicFactorySetup {
 	 * Showing invocation of finder method.
 	 */
 	@Test
-	public void executingFinders() {
+	void executingFinders() {
 
 		assertThat(userRepository.findByTheUsersName("username")).isEqualTo(user);
 		assertThat(userRepository.findByLastname("lastname")).first().isEqualTo(user);

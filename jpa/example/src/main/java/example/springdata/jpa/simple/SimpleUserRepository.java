@@ -1,11 +1,11 @@
 /*
- * Copyright 2013-2018 the original author or authors.
+ * Copyright 2013-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,28 +17,32 @@ package example.springdata.jpa.simple;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.ListCrudRepository;
+import org.springframework.scheduling.annotation.Async;
 
 /**
- * Simple repository interface for {@link User} instances. The interface is used to declare so called query methods,
- * methods to retrieve single entities or collections of them.
+ * Simple repository interface for {@link User} instances. The interface is used to declare the so-called query methods,
+ * i.e. methods to retrieve single entities or collections of them.
  *
  * @author Oliver Gierke
  * @author Thomas Darimont
  * @author Christoph Strobl
  */
-public interface SimpleUserRepository extends CrudRepository<User, Long> {
+public interface SimpleUserRepository extends ListCrudRepository<User, Long> {
 
 	/**
 	 * Find the user with the given username. This method will be translated into a query using the
-	 * {@link javax.persistence.NamedQuery} annotation at the {@link User} class.
+	 * {@link jakarta.persistence.NamedQuery} annotation at the {@link User} class.
 	 *
-	 * @param lastname
+	 * @param username
 	 * @return
 	 */
 	User findByTheUsersName(String username);
@@ -61,6 +65,17 @@ public interface SimpleUserRepository extends CrudRepository<User, Long> {
 	List<User> findByLastname(String lastname);
 
 	/**
+	 * Find at most the number of users defined via maxResults with the given lastname.
+	 * This method will be translated into a query by constructing it directly from the method name as there is no other
+	 * query declared.
+	 *
+	 * @param lastname
+	 * @param maxResults the maximum number of results returned.
+	 * @return
+	 */
+	List<User> findByLastname(String lastname, Limit maxResults);
+
+	/**
 	 * Returns all users with the given firstname. This method will be translated into a query using the one declared in
 	 * the {@link Query} annotation declared one.
 	 *
@@ -69,6 +84,17 @@ public interface SimpleUserRepository extends CrudRepository<User, Long> {
 	 */
 	@Query("select u from User u where u.firstname = :firstname")
 	List<User> findByFirstname(String firstname);
+
+	/**
+	 * Returns at most the number of users defined via {@link Limit} with the given firstname. This method will be
+	 * translated into a query using the one declared in the {@link Query} annotation declared one.
+	 *
+	 * @param firstname
+	 * @param maxResults the maximum number of results returned.
+	 * @return
+	 */
+	@Query("select u from User u where u.firstname = :firstname")
+	List<User> findByFirstname(String firstname, Limit maxResults);
 
 	/**
 	 * Returns all users with the given name as first- or lastname. This makes the query to method relation much more
@@ -130,4 +156,34 @@ public interface SimpleUserRepository extends CrudRepository<User, Long> {
 	 */
 	@Query("select u from User u where u.firstname = :#{#user.firstname} or u.lastname = :#{#user.lastname}")
 	Iterable<User> findByFirstnameOrLastname(User user);
+
+	/**
+	 * Sample default method.
+	 *
+	 * @param user
+	 * @return
+	 */
+	default List<User> findByLastname(User user) {
+		return findByLastname(user == null ? null : user.getLastname());
+	}
+
+	/**
+	 * Sample method to demonstrate support for {@link Stream} as a return type with a custom query. The query is executed
+	 * in a streaming fashion which means that the method returns as soon as the first results are ready.
+	 *
+	 * @return
+	 */
+	@Query("select u from User u")
+	Stream<User> streamAllCustomers();
+
+	/**
+	 * Sample method to demonstrate support for {@link Stream} as a return type with a derived query. The query is
+	 * executed in a streaming fashion which means that the method returns as soon as the first results are ready.
+	 *
+	 * @return
+	 */
+	Stream<User> findAllByLastnameIsNotNull();
+
+	@Async
+	CompletableFuture<List<User>> readAllBy();
 }

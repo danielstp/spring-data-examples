@@ -1,11 +1,11 @@
 /*
- * Copyright 2014-2018 the original author or authors.
+ * Copyright 2014-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,74 +15,72 @@
  */
 package example.springdata.jpa.storedprocedures;
 
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
-import javax.persistence.EntityManager;
-import javax.persistence.ParameterMode;
-import javax.persistence.StoredProcedureQuery;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.ParameterMode;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Intergration test showing the usage of JPA 2.1 stored procedures support through Spring Data repositories.
+ * Integration test showing the usage of JPA 2.1 stored procedures support through Spring Data repositories.
  *
  * @author Thomas Darimont
  * @author Oliver Gierke
+ * @author Divya Srivastava
+ * @author Jens Schauder
  */
-@RunWith(SpringRunner.class)
 @SpringBootTest
 @Transactional
-public class UserRepositoryIntegrationTests {
+class UserRepositoryIntegrationTests {
 
 	@Autowired UserRepository repository;
-
-	/**
-	 * @see DATAJPA-455
-	 */
-	@Test
-	public void entityAnnotatedCustomNamedProcedurePlus1IO() {
-		assertThat(repository.plus1BackedByOtherNamedStoredProcedure(1), is(2));
-	}
-
-	/**
-	 * @see DATAJPA-455
-	 */
-	@Test
-	public void invokeDerivedStoredProcedure() {
-		assertThat(repository.plus1inout(1), is(2));
-	}
-
 	// This is what it would look like implemented manually.
 
 	@Autowired EntityManager em;
 
+	/**
+	 * @see DATAJPA-455
+	 */
 	@Test
-	public void plainJpa21() {
+	void entityAnnotatedCustomNamedProcedurePlus1IO() {
+		assertThat(repository.plus1BackedByOtherNamedStoredProcedure(1)).isEqualTo(2);
+	}
 
-		StoredProcedureQuery proc = em.createStoredProcedureQuery("plus1inout");
+	/**
+	 * @see DATAJPA-455
+	 */
+	@Test
+	void invokeDerivedStoredProcedure() {
+		assertThat(repository.plus1inout(1)).isEqualTo(2);
+	}
+
+
+	@Test
+	void plainJpa21() {
+
+		var proc = em.createStoredProcedureQuery("plus1inout");
 		proc.registerStoredProcedureParameter(1, Integer.class, ParameterMode.IN);
 		proc.registerStoredProcedureParameter(2, Integer.class, ParameterMode.OUT);
 
 		proc.setParameter(1, 1);
 		proc.execute();
 
-		assertThat(proc.getOutputParameterValue(2), is((Object) 2));
+		assertThat(proc.getOutputParameterValue(2)).isEqualTo(2);
 	}
 
 	@Test
-	public void plainJpa21_entityAnnotatedCustomNamedProcedurePlus1IO() {
+	void plainJpa21_entityAnnotatedCustomNamedProcedurePlus1IO() {
 
-		StoredProcedureQuery proc = em.createNamedStoredProcedureQuery("User.plus1");
+		var proc = em.createNamedStoredProcedureQuery("User.plus1");
 
 		proc.setParameter("arg", 1);
 		proc.execute();
 
-		assertThat(proc.getOutputParameterValue("res"), is((Object) 2));
+		assertThat(proc.getOutputParameterValue("res")).isEqualTo(2);
 	}
 }

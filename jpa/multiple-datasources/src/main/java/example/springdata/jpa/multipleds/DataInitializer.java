@@ -1,11 +1,11 @@
 /*
- * Copyright 2015-2018 the original author or authors.
+ * Copyright 2015-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,8 +38,8 @@ import org.springframework.util.Assert;
  * create a dedicated annotation meta-annotated with {@code @Transactional("…")} to be able to refer to a particular
  * data source without using String qualifiers.
  * <p>
- * Also, not that one cannot interact with both databases in a single, transactional method as transactions are thread
- * bound in Spring an thus only a single transaction can be active in a single thread. See {@link Application#init()}
+ * Also, note that one cannot interact with both databases in a single, transactional method as transactions are thread
+ * bound in Spring and thus only a single transaction can be active in a single thread. See {@link Application#init()}
  * for how to orchestrate the calls.
  *
  * @author Oliver Gierke
@@ -70,9 +70,9 @@ public class DataInitializer {
 	@Transactional("orderTransactionManager")
 	public Order initializeOrder(CustomerId customer) {
 
-		Assert.notNull(customer, "Custoemr identifier must not be null!");
+		Assert.notNull(customer, "Customer identifier must not be null!");
 
-		Order order = new Order(customer);
+		var order = new Order(customer);
 		order.add(new LineItem("Lakewood Guitar"));
 
 		return orders.save(order);

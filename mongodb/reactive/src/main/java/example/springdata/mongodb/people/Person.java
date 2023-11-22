@@ -1,11 +1,11 @@
 /*
- * Copyright 2016-2018 the original author or authors.
+ * Copyright 2016-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,10 +15,8 @@
  */
 package example.springdata.mongodb.people;
 
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
@@ -26,13 +24,14 @@ import org.springframework.data.mongodb.core.mapping.Document;
  *
  * @author Mark Paluch
  */
-@Data
-@RequiredArgsConstructor
 @Document
-public class Person {
+public record Person(@Id String id, String firstname, String lastname, int age) {
 
-	private @Id String id;
-	private final String firstname;
-	private final String lastname;
-	private final int age;
+	@PersistenceCreator 
+	public Person {
+	}
+
+	public Person(String firstname, String lastname, int age) {
+		this(null, firstname, lastname, age);
+	}
 }

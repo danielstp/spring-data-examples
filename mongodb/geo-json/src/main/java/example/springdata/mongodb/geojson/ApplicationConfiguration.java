@@ -1,11 +1,11 @@
 /*
- * Copyright 2015-2018 the original author or authors.
+ * Copyright 2015-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -45,11 +45,11 @@ public class ApplicationConfiguration {
 	 */
 	public @Bean AbstractRepositoryPopulatorFactoryBean repositoryPopulator() {
 
-		ObjectMapper mapper = new ObjectMapper();
+		var mapper = new ObjectMapper();
 		mapper.addMixIn(GeoJsonPoint.class, GeoJsonPointMixin.class);
 		mapper.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-		Jackson2RepositoryPopulatorFactoryBean factoryBean = new Jackson2RepositoryPopulatorFactoryBean();
+		var factoryBean = new Jackson2RepositoryPopulatorFactoryBean();
 		factoryBean.setResources(new Resource[] { new ClassPathResource("starbucks-in-nyc.json") });
 		factoryBean.setMapper(mapper);
 

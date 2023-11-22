@@ -1,11 +1,11 @@
 /*
- * Copyright 2014-2018 the original author or authors.
+ * Copyright 2014-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,15 +17,20 @@ package example.springdata.mongodb.textsearch;
 
 import static example.springdata.mongodb.util.ConsoleResultPrinter.*;
 
-import java.util.List;
+import example.springdata.mongodb.util.MongoContainers;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.data.mongodb.core.mapping.TextScore;
 import org.springframework.data.mongodb.core.query.TextCriteria;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+
+import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
  * Integration tests showing the text search functionality using repositories.
@@ -34,21 +39,29 @@ import org.springframework.test.context.junit4.SpringRunner;
  * @author Oliver Gierke
  * @author Thomas Darimont
  */
-@RunWith(SpringRunner.class)
-@SpringBootTest
-public class TextSearchRepositoryTests {
+@Testcontainers
+@DataMongoTest
+class TextSearchRepositoryTests {
+
+	@Container //
+	private static MongoDBContainer mongoDBContainer = MongoContainers.getDefaultContainer();
+
+	@DynamicPropertySource
+	static void setProperties(DynamicPropertyRegistry registry) {
+		registry.add("spring.data.mongodb.uri", mongoDBContainer::getReplicaSetUrl);
+	}
 
 	@Autowired BlogPostRepository repo;
 
 	/**
 	 * Show how to do simple matching. <br />
-	 * Note that text search is case insensitive and will also find entries like {@literal releases}.
+	 * Note that text search is case-insensitive and will also find entries like {@literal releases}.
 	 */
 	@Test
-	public void findAllBlogPostsWithRelease() {
+	void findAllBlogPostsWithRelease() {
 
-		TextCriteria criteria = TextCriteria.forDefaultLanguage().matchingAny("release");
-		List<BlogPost> blogPosts = repo.findAllBy(criteria);
+		var criteria = TextCriteria.forDefaultLanguage().matchingAny("release");
+		var blogPosts = repo.findAllBy(criteria);
 
 		printResult(blogPosts, criteria);
 	}
@@ -57,10 +70,10 @@ public class TextSearchRepositoryTests {
 	 * Simple matching using negation.
 	 */
 	@Test
-	public void findAllBlogPostsWithReleaseButHeyIDoWantTheEngineeringStuff() {
+	void findAllBlogPostsWithReleaseButHeyIDoWantTheEngineeringStuff() {
 
-		TextCriteria criteria = TextCriteria.forDefaultLanguage().matchingAny("release").notMatching("engineering");
-		List<BlogPost> blogPosts = repo.findAllBy(criteria);
+		var criteria = TextCriteria.forDefaultLanguage().matchingAny("release").notMatching("engineering");
+		var blogPosts = repo.findAllBy(criteria);
 
 		printResult(blogPosts, criteria);
 	}
@@ -69,10 +82,10 @@ public class TextSearchRepositoryTests {
 	 * Phrase matching looks for the whole phrase as one.
 	 */
 	@Test
-	public void findAllBlogPostsByPhrase() {
+	void findAllBlogPostsByPhrase() {
 
-		TextCriteria criteria = TextCriteria.forDefaultLanguage().matchingPhrase("release candidate");
-		List<BlogPost> blogPosts = repo.findAllBy(criteria);
+		var criteria = TextCriteria.forDefaultLanguage().matchingPhrase("release candidate");
+		var blogPosts = repo.findAllBy(criteria);
 
 		printResult(blogPosts, criteria);
 	}
@@ -81,10 +94,10 @@ public class TextSearchRepositoryTests {
 	 * Sort by relevance relying on the value marked with {@link TextScore}.
 	 */
 	@Test
-	public void findAllBlogPostsByPhraseSortByScore() {
+	void findAllBlogPostsByPhraseSortByScore() {
 
-		TextCriteria criteria = TextCriteria.forDefaultLanguage().matchingPhrase("release candidate");
-		List<BlogPost> blogPosts = repo.findAllByOrderByScoreDesc(criteria);
+		var criteria = TextCriteria.forDefaultLanguage().matchingPhrase("release candidate");
+		var blogPosts = repo.findAllByOrderByScoreDesc(criteria);
 
 		printResult(blogPosts, criteria);
 	}

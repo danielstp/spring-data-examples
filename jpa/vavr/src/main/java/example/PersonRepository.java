@@ -1,11 +1,11 @@
 /*
- * Copyright 2016-2018 the original author or authors.
+ * Copyright 2016-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.repository.Repository;
+import org.springframework.data.repository.query.Param;
 
 /**
  * Repository interface showing the usage of Vavr collections and its {@link Option} type as repository query method
@@ -55,7 +56,7 @@ public interface PersonRepository extends Repository<Person, Long> {
 
 	/**
 	 * Returning a {@link Try} is supported out of the box with all exceptions being handled by {@link Try} immediately.
-	 * 
+	 *
 	 * @param lastname
 	 * @return
 	 */

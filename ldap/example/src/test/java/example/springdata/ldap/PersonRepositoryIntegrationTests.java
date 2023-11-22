@@ -1,11 +1,11 @@
 /*
- * Copyright 2017-2018 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,24 +17,20 @@ package example.springdata.ldap;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.util.List;
-import java.util.Optional;
-
 import javax.naming.InvalidNameException;
 import javax.naming.ldap.LdapName;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
  * Integration tests for {@link PersonRepository}.
  *
  * @author Mark Paluch
+ * @author Divya Srivastava
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest
 public class PersonRepositoryIntegrationTests {
 
@@ -46,9 +42,9 @@ public class PersonRepositoryIntegrationTests {
 	 * @throws InvalidNameException
 	 */
 	@Test
-	public void findOneByName() throws InvalidNameException {
+	void findOneByName() throws InvalidNameException {
 
-		Optional<Person> person = personRepository.findById(new LdapName("uid=bob,ou=people,dc=springframework,dc=org"));
+		var person = personRepository.findById(new LdapName("uid=bob,ou=people,dc=springframework,dc=org"));
 
 		assertThat(person).hasValueSatisfying(it -> {
 			assertThat(it.getFullName()).isEqualTo("Bob Hamilton");
@@ -61,9 +57,9 @@ public class PersonRepositoryIntegrationTests {
 	 * Find all entries in the base path.
 	 */
 	@Test
-	public void findAll() {
+	void findAll() {
 
-		Iterable<Person> people = personRepository.findAll();
+		var people = personRepository.findAll();
 
 		assertThat(people).hasSize(3).extracting("uid").contains("bob", "joe", "ben");
 	}
@@ -72,9 +68,9 @@ public class PersonRepositoryIntegrationTests {
 	 * Find all {@link Person} objects starting with {@code Ham} in the field {@code lastname}.
 	 */
 	@Test
-	public void findByLastname() {
+	void findByLastname() {
 
-		List<Person> people = personRepository.findByLastnameStartsWith("Ham");
+		var people = personRepository.findByLastnameStartsWith("Ham");
 
 		assertThat(people).hasSize(1).extracting("uid").contains("bob");
 	}
@@ -85,16 +81,16 @@ public class PersonRepositoryIntegrationTests {
 	 * @throws InvalidNameException
 	 */
 	@Test
-	public void addUser() throws InvalidNameException {
+	void addUser() throws InvalidNameException {
 
-		Person walter = new Person();
+		var walter = new Person();
 		walter.setFullName("Walter White");
 		walter.setUid("heisenberg");
 		walter.setLastname("White");
 
 		personRepository.save(walter);
 
-		List<Person> people = personRepository.findByUid("heisenberg");
+		var people = personRepository.findByUid("heisenberg");
 
 		assertThat(people).hasSize(1).extracting("fullName").contains("Walter White");
 

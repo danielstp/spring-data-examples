@@ -1,11 +1,11 @@
 /*
- * Copyright 2011-2018 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,18 +15,15 @@
  */
 package example.springdata.jpa.showcase.snippets;
 
+import example.springdata.jpa.showcase.core.Account;
+
+import java.time.LocalDate;
 import java.util.Date;
 
-import javax.persistence.EntityManager;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
+import jakarta.persistence.EntityManager;
 
-import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-
-import example.springdata.jpa.showcase.core.Account;
 
 /**
  * @author Oliver Gierke
@@ -48,13 +45,13 @@ class AccountRepositoryImpl implements AccountRepositoryCustom {
 	@Override
 	public void removedExpiredAccounts(LocalDate reference) {
 
-		CriteriaBuilder cb = em.getCriteriaBuilder();
-		CriteriaQuery<Account> query = cb.createQuery(Account.class);
-		Root<Account> account = query.from(Account.class);
+		var cb = em.getCriteriaBuilder();
+		var query = cb.createQuery(Account.class);
+		var account = query.from(Account.class);
 
-		query.where(cb.lessThan(account.get("expiryDate").as(Date.class), reference.toDateTimeAtStartOfDay().toDate()));
+		query.where(cb.lessThan(account.get("expiryDate").as(Date.class), java.sql.Date.valueOf(reference)));
 
-		for (Account each : em.createQuery(query).getResultList()) {
+		for (var each : em.createQuery(query).getResultList()) {
 			em.remove(each);
 		}
 	}

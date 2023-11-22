@@ -1,11 +1,11 @@
 /*
- * Copyright 2016-2018 the original author or authors.
+ * Copyright 2016-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,17 +17,18 @@ package example.springdata.cassandra.convert;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Currency;
 import java.util.List;
 
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.cassandra.config.AbstractCassandraConfiguration;
-import org.springframework.data.cassandra.config.SchemaAction;
 import org.springframework.data.cassandra.core.convert.CassandraCustomConversions;
-import org.springframework.data.cassandra.repository.config.EnableCassandraRepositories;
 import org.springframework.util.StringUtils;
 
-import com.datastax.driver.core.Row;
+import com.datastax.oss.driver.api.core.cql.Row;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -35,32 +36,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  *
  * @author Mark Paluch
  */
-@Configuration
-@EnableCassandraRepositories
-class ConverterConfiguration extends AbstractCassandraConfiguration {
+@SpringBootApplication
+@EntityScan(basePackageClasses = Addressbook.class)
+class ConverterConfiguration {
 
-	@Override
-	public String getKeyspaceName() {
-		return "example";
-	}
-
-	@Override
-	public String[] getEntityBasePackages() {
-		return new String[] { Addressbook.class.getPackage().getName() };
-	}
-
-	@Override
-	public SchemaAction getSchemaAction() {
-		return SchemaAction.RECREATE;
-	}
-
-	@Override
+	@Bean
 	public CassandraCustomConversions customConversions() {
 
 		List<Converter<?, ?>> converters = new ArrayList<>();
 		converters.add(new PersonWriteConverter());
 		converters.add(new PersonReadConverter());
 		converters.add(new CustomAddressbookReadConverter());
+		converters.add(CurrencyToStringConverter.INSTANCE);
+		converters.add(StringToCurrencyConverter.INSTANCE);
 
 		return new CassandraCustomConversions(converters);
 	}
@@ -105,12 +93,26 @@ class ConverterConfiguration extends AbstractCassandraConfiguration {
 
 		public CustomAddressbook convert(Row source) {
 
-			CustomAddressbook result = new CustomAddressbook();
+			return new CustomAddressbook(source.getString("id"), source.getString("me"));
+		}
+	}
 
-			result.setTheId(source.getString("id"));
-			result.setMyDetailsAsJson(source.getString("me"));
+	enum StringToCurrencyConverter implements Converter<String, Currency> {
+		INSTANCE;
 
-			return result;
+		@Override
+		public Currency convert(String source) {
+			return Currency.getInstance(source);
+		}
+	}
+
+	enum CurrencyToStringConverter implements Converter<Currency, String> {
+
+		INSTANCE;
+
+		@Override
+		public String convert(Currency source) {
+			return source.getCurrencyCode();
 		}
 	}
 }

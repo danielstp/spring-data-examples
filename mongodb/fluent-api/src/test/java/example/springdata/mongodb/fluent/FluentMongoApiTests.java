@@ -1,11 +1,11 @@
 /*
- * Copyright 2017-2018 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,13 +21,15 @@ import static org.springframework.data.mongodb.core.query.Criteria.*;
 import static org.springframework.data.mongodb.core.query.Query.*;
 import static org.springframework.data.mongodb.core.query.Update.*;
 
+import example.springdata.mongodb.util.MongoContainers;
+
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.GeoResults;
@@ -35,9 +37,12 @@ import org.springframework.data.mongodb.core.ExecutableFindOperation.Terminating
 import org.springframework.data.mongodb.core.FluentMongoOperations;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.NearQuery;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 
-import com.mongodb.client.result.UpdateResult;
+import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
  * Some tests showing usage and capabilities of {@link FluentMongoOperations}. <br />
@@ -53,22 +58,30 @@ import com.mongodb.client.result.UpdateResult;
  *
  * @author Christoph Strobl
  */
-@RunWith(SpringRunner.class)
-@SpringBootTest
-public class FluentMongoApiTests {
+@Testcontainers
+@DataMongoTest
+class FluentMongoApiTests {
+
+	@Container //
+	private static MongoDBContainer mongoDBContainer = MongoContainers.getDefaultContainer();
+
+	@DynamicPropertySource
+	static void setProperties(DynamicPropertyRegistry registry) {
+		registry.add("spring.data.mongodb.uri", mongoDBContainer::getReplicaSetUrl);
+	}
 
 	@Autowired FluentMongoOperations mongoOps;
 
 	/**
 	 * A predefined, reusable lookup method.
 	 */
-	TerminatingFind<Jedi> findLuke;
+	private TerminatingFind<Jedi> findLuke;
 
-	final NearQuery alderaanWithin3Parsecs = NearQuery.near(-73.9667, 40.78).maxDistance(new Distance(3, MILES))
+	private final NearQuery alderaanWithin3Parsecs = NearQuery.near(-73.9667, 40.78).maxDistance(new Distance(3, MILES))
 			.spherical(true);
 
-	@Before
-	public void setUp() {
+	@BeforeEach
+	void setUp() {
 
 		findLuke = mongoOps.query(SWCharacter.class) // SWCharacter does only define the collection, id and name
 				.as(Jedi.class) // so we use Jedi as the desired return type to also map "lastname"
@@ -91,7 +104,7 @@ public class FluentMongoApiTests {
 	 * </pre>
 	 */
 	@Test
-	public void usePredefinedFinder() {
+	void usePredefinedFinder() {
 		assertThat(findLuke.one()).contains(new Jedi("luke", "skywalker"));
 	}
 
@@ -109,9 +122,9 @@ public class FluentMongoApiTests {
 	 * </pre>
 	 */
 	@Test
-	public void fetchInterfaceProjection() {
+	void fetchInterfaceProjection() {
 
-		Sith anakin = mongoOps.query(SWCharacter.class) // SWCharacter does only define the collection, id and name
+		var anakin = mongoOps.query(Jedi.class) // SWCharacter does only define the collection, id and name
 				.as(Sith.class) // use an interface as return type to create a projection
 				.matching(query(where("firstname").is("anakin"))) // so properties are taken as is
 				.oneValue();
@@ -146,7 +159,7 @@ public class FluentMongoApiTests {
 	 * </pre>
 	 */
 	@Test
-	public void queryFirstVsOne() {
+	void queryFirstVsOne() {
 
 		mongoOps.query(SWCharacter.class) // SWCharacter does only define the collection, id and name
 				.matching(query(where("lastname").is("skywalker"))) // so properties are taken as is
@@ -177,9 +190,9 @@ public class FluentMongoApiTests {
 	 * </pre>
 	 */
 	@Test
-	public void geoNearQuery() {
+	void geoNearQuery() {
 
-		GeoResults<Jedi> results = mongoOps.query(SWCharacter.class) // SWCharacter defines collection, id and name
+		var results = mongoOps.query(SWCharacter.class) // SWCharacter defines collection, id and name
 				.as(Jedi.class) // but we want to map the results to Jedi
 				.near(alderaanWithin3Parsecs) // and find those with home planet near alderaan
 				.all();
@@ -202,9 +215,9 @@ public class FluentMongoApiTests {
 	 * </pre>
 	 */
 	@Test
-	public void querySpecificCollection() {
+	void querySpecificCollection() {
 
-		List<Human> skywalkers = mongoOps.query(Human.class) // Human does not define a collection via @Document
+		var skywalkers = mongoOps.query(Human.class) // Human does not define a collection via @Document
 				.inCollection("star-wars") // so we set an explicit collection name
 				.matching(query(where("lastname").is("skywalker"))) // to find all documents with a matching "lastname"
 				.all();
@@ -216,9 +229,9 @@ public class FluentMongoApiTests {
 	 * Simple insert operation adding a new {@link Jedi} to the {@literal star-wars} collection.
 	 */
 	@Test
-	public void justInsertOne() {
+	void justInsertOne() {
 
-		SWCharacter chewbacca = new SWCharacter("Chewbacca");
+		var chewbacca = new SWCharacter("Chewbacca");
 
 		mongoOps.insert(SWCharacter.class).one(chewbacca);
 
@@ -239,9 +252,9 @@ public class FluentMongoApiTests {
 	 * </pre>
 	 */
 	@Test
-	public void updateAndUpsert() {
+	void updateAndUpsert() {
 
-		UpdateResult result = mongoOps.update(Jedi.class) // Jedi defines the collection and field mapping
+		var result = mongoOps.update(Jedi.class) // Jedi defines the collection and field mapping
 				.matching(query(where("lastname").is("windu"))) // so "last" maps to "lastname".
 				.apply(update("name", "mence")) // We'll update the "firstname" to "mence"
 				.upsert(); // and add a new document if it does not exist already.
